@@ -1,0 +1,228 @@
+:root {
+  --color-primary: #131313;
+  --color-secondary: #5e5e5e;
+  --color-tertiary: #1a6daf;
+  --color-neutral: #e9e6dd;
+  --color-surface: #f4f1e8;
+  --color-on-primary: #f4f1e8;
+  --font-display: "VT323", "Courier New", monospace;
+  --font-body: "IBM Plex Mono", "Courier New", monospace;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 32px;
+  --motion-fast: 140ms ease;
+  --motion-page: 220ms ease-out;
+  --scrollbar-size: 16px;
+  --scrollbar-track: #d8d4c8;
+  --scrollbar-track-pixel: rgba(19, 19, 19, 0.16);
+  --scrollbar-thumb: var(--color-primary);
+  --scrollbar-thumb-hover: var(--color-tertiary);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background:
+    linear-gradient(#d2cec3 1px, transparent 1px),
+    linear-gradient(90deg, #d2cec3 1px, transparent 1px),
+    var(--color-neutral);
+  background-size: 28px 28px;
+  color: var(--color-primary);
+  font-family: var(--font-body);
+  font-size: 16px;
+  letter-spacing: 0;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  overflow-x: hidden;
+}
+
+* {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  height: var(--scrollbar-size);
+  width: var(--scrollbar-size);
+}
+
+*::-webkit-scrollbar-track {
+  background:
+    linear-gradient(var(--scrollbar-track-pixel) 1px, transparent 1px),
+    linear-gradient(90deg, var(--scrollbar-track-pixel) 1px, transparent 1px),
+    var(--scrollbar-track);
+  background-size: 8px 8px;
+  border: 1px solid var(--color-secondary);
+}
+
+*::-webkit-scrollbar-thumb {
+  background:
+    linear-gradient(135deg, rgba(244, 241, 232, 0.18) 25%, transparent 25%) 0 0 / 8px 8px,
+    var(--scrollbar-thumb);
+  border: 3px solid var(--scrollbar-track);
+  box-shadow:
+    inset 0 0 0 1px var(--color-primary),
+    inset -3px -3px 0 rgba(0, 0, 0, 0.28);
+  min-height: 40px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background:
+    linear-gradient(135deg, rgba(244, 241, 232, 0.22) 25%, transparent 25%) 0 0 / 8px 8px,
+    var(--scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track);
+  border: 1px solid var(--color-secondary);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+img {
+  display: block;
+}
+
+.appShell {
+  background: rgba(233, 230, 221, 0.9);
+  min-height: 100vh;
+}
+
+.appMain {
+  margin: 0 auto;
+  max-width: 1240px;
+  padding: var(--space-lg);
+}
+
+.pageStack {
+  animation: pageIn var(--motion-page);
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.pageHeader {
+  animation: panelIn var(--motion-page);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-secondary);
+  border-left: 1px solid var(--color-secondary);
+  border-right: 1px solid var(--color-secondary);
+  border-top: 4px solid var(--color-primary);
+  display: grid;
+  gap: var(--space-sm);
+  grid-template-columns: 1fr auto;
+  overflow: hidden;
+  padding: var(--space-md);
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pageHeader h1 {
+  font-family: var(--font-display);
+  font-size: 3.25rem;
+  font-weight: 400;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.pageHeader p {
+  color: var(--color-secondary);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 760px;
+}
+
+.threadMeta {
+  align-content: stretch;
+  border-left: 1px solid var(--color-secondary);
+  display: grid;
+  min-width: 240px;
+}
+
+.threadMeta span {
+  align-items: center;
+  border-bottom: 1px solid var(--color-secondary);
+  color: var(--color-secondary);
+  display: flex;
+  font-size: 0.7rem;
+  justify-content: space-between;
+  padding: 8px 0 8px var(--space-md);
+  text-transform: uppercase;
+}
+
+.threadMeta span:last-child {
+  border-bottom: 0;
+}
+
+.eyebrow {
+  color: var(--color-tertiary);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 640px) {
+  .appMain {
+    padding: var(--space-md);
+  }
+
+  .pageHeader {
+    grid-template-columns: 1fr;
+  }
+
+  .pageHeader h1 {
+    font-size: 2.6rem;
+  }
+
+  .threadMeta {
+    border-left: 0;
+    border-top: 1px solid var(--color-secondary);
+    min-width: 0;
+  }
+
+  .threadMeta span {
+    padding-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+}

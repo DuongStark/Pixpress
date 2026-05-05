@@ -1,0 +1,77 @@
+.fieldset {
+  border: 0;
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+}
+
+.fieldset legend {
+  color: var(--color-secondary);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  margin-bottom: var(--space-sm);
+  text-transform: uppercase;
+}
+
+.inputLabel {
+  color: var(--color-secondary);
+  display: grid;
+  font-size: 0.7rem;
+  gap: 6px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.inputLabel span {
+  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr auto;
+}
+
+.inputLabel input {
+  background: var(--color-neutral);
+  border: 1px solid var(--color-secondary);
+  color: var(--color-primary);
+  min-height: 42px;
+  padding: 0 10px;
+}
+
+.inputLabel strong {
+  border-bottom: 1px solid var(--color-secondary);
+  border-right: 1px solid var(--color-secondary);
+  border-top: 1px solid var(--color-secondary);
+  min-height: 42px;
+  padding: 11px 12px 0;
+}
+
+.segmented {
+  border: 1px solid var(--color-secondary);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.segmented button {
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--color-secondary);
+  color: var(--color-primary);
+  cursor: pointer;
+  min-height: 42px;
+}
+
+.segmented button:last-child {
+  border-right: 0;
+}
+
+.segmented button:hover,
+.segmented button.active {
+  background: var(--color-tertiary);
+  color: var(--color-on-primary);
+}
+
+.fieldset p {
+  color: var(--color-secondary);
+  line-height: 1.45;
+  margin: 0;
+}

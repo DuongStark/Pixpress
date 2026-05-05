@@ -1,0 +1,9 @@
+.alert {
+  align-items: flex-start;
+  background: #fff7d1;
+  border: 1px solid #9a7400;
+  color: #332600;
+  display: flex;
+  gap: var(--space-sm);
+  padding: 12px;
+}

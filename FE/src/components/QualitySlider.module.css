@@ -1,0 +1,32 @@
+.field {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.field span {
+  align-items: center;
+  color: var(--color-secondary);
+  display: flex;
+  font-size: 0.7rem;
+  justify-content: space-between;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.field strong {
+  color: var(--color-primary);
+  font-size: 0.92rem;
+  letter-spacing: 0;
+}
+
+.estimate {
+  background: rgba(26, 109, 175, 0.1);
+  border: 1px solid rgba(26, 109, 175, 0.35);
+  color: var(--color-primary) !important;
+  padding: 8px 10px;
+}
+
+.field input {
+  accent-color: var(--color-tertiary);
+  width: 100%;
+}

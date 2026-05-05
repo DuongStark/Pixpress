@@ -1,0 +1,206 @@
+.resultGrid {
+  display: grid;
+  gap: var(--space-lg);
+  grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr);
+}
+
+.previewPanel,
+.sidePanel {
+  animation: panelIn 220ms ease-out;
+  background: var(--color-surface);
+  border: 1px solid var(--color-secondary);
+  display: grid;
+  gap: 0;
+}
+
+.sidePanel {
+  align-self: start;
+}
+
+.previewHeader {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  display: flex;
+  font-size: 0.75rem;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: 10px 12px;
+  position: relative;
+  text-transform: uppercase;
+}
+
+.panelHeader {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  display: flex;
+  font-size: 0.7rem;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: 10px 12px;
+  position: relative;
+  text-transform: uppercase;
+}
+
+.previewHeader::after,
+.panelHeader::after {
+  animation: headerSweep 2.8s linear infinite;
+  background: linear-gradient(90deg, transparent, rgba(244, 241, 232, 0.24), transparent);
+  bottom: 0;
+  content: "";
+  height: 1px;
+  left: 0;
+  position: absolute;
+  right: 0;
+}
+
+.imageFrame {
+  align-items: center;
+  background:
+    linear-gradient(45deg, rgba(19, 19, 19, 0.08) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(19, 19, 19, 0.08) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(19, 19, 19, 0.08) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(19, 19, 19, 0.08) 75%),
+    var(--color-neutral);
+  background-position:
+    0 0,
+    0 10px,
+    10px -10px,
+    -10px 0;
+  background-size: 20px 20px;
+  display: flex;
+  height: clamp(360px, 58vh, 700px);
+  justify-content: center;
+  overflow: hidden;
+  padding: var(--space-md);
+}
+
+.beforeAfterGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.compareFrame {
+  display: grid;
+  margin: 0;
+  min-width: 0;
+}
+
+.compareFrame:first-child {
+  border-right: 1px solid var(--color-secondary);
+}
+
+.compareFrame figcaption {
+  background: var(--color-neutral);
+  border-bottom: 1px solid var(--color-secondary);
+  color: var(--color-secondary);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  padding: 8px 12px;
+  text-transform: uppercase;
+}
+
+.imageFrame img {
+  animation: imageReveal 180ms ease-out;
+  height: 100%;
+  object-fit: contain;
+  width: 100%;
+}
+
+.actions {
+  display: grid;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+}
+
+.primaryAction,
+.secondaryAction {
+  align-items: center;
+  display: inline-flex;
+  font-weight: 600;
+  gap: var(--space-sm);
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 14px;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition:
+    border-color var(--motion-fast),
+    color var(--motion-fast),
+    transform var(--motion-fast);
+}
+
+.primaryAction {
+  background: var(--color-tertiary);
+  border: 1px solid var(--color-tertiary);
+  color: var(--color-on-primary);
+}
+
+.secondaryAction {
+  border: 1px solid var(--color-secondary);
+  color: var(--color-primary);
+}
+
+.secondaryAction:hover {
+  border-color: var(--color-tertiary);
+  color: var(--color-tertiary);
+  transform: translateY(-1px);
+}
+
+.primaryAction:hover {
+  transform: translateY(-1px);
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes headerSweep {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes imageReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 1080px) {
+  .resultGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .beforeAfterGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .compareFrame:first-child {
+    border-bottom: 1px solid var(--color-secondary);
+    border-right: 0;
+  }
+
+  .imageFrame {
+    height: 320px;
+  }
+}

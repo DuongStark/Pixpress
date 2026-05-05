@@ -1,0 +1,129 @@
+.editorGrid {
+  display: grid;
+  gap: var(--space-lg);
+  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
+}
+
+.panel {
+  animation: panelIn 220ms ease-out;
+  align-self: start;
+  background: var(--color-surface);
+  border: 1px solid var(--color-secondary);
+  display: grid;
+  gap: 0;
+}
+
+.panelHeader {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  display: flex;
+  font-size: 0.7rem;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: 10px 12px;
+  position: relative;
+  text-transform: uppercase;
+}
+
+.panelHeader::after {
+  animation: headerSweep 2.8s linear infinite;
+  background: linear-gradient(90deg, transparent, rgba(244, 241, 232, 0.24), transparent);
+  bottom: 0;
+  content: "";
+  height: 1px;
+  left: 0;
+  position: absolute;
+  right: 0;
+}
+
+.optionBlock {
+  border-bottom: 1px solid var(--color-secondary);
+  padding: var(--space-md);
+}
+
+.sectionDivider {
+  background:
+    linear-gradient(90deg, rgba(26, 109, 175, 0.14), transparent 70%),
+    var(--color-neutral);
+  border-bottom: 1px solid var(--color-secondary);
+  border-top: 1px solid var(--color-secondary);
+  color: var(--color-tertiary);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 8px 12px;
+  text-transform: uppercase;
+}
+
+.panelHeader + .sectionDivider {
+  border-top: 0;
+}
+
+.featureBlock {
+  background: rgba(26, 109, 175, 0.08);
+}
+
+.actions {
+  display: grid;
+  gap: var(--space-sm);
+  grid-template-columns: 0.55fr 1fr;
+  padding: var(--space-md);
+}
+
+.secondaryAction {
+  align-items: center;
+  border: 1px solid var(--color-secondary);
+  color: var(--color-primary);
+  display: inline-flex;
+  font-weight: 600;
+  gap: var(--space-sm);
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 14px;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition:
+    border-color var(--motion-fast),
+    color var(--motion-fast),
+    transform var(--motion-fast);
+}
+
+.secondaryAction:hover {
+  border-color: var(--color-tertiary);
+  color: var(--color-tertiary);
+  transform: translateY(-1px);
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes headerSweep {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (max-width: 1080px) {
+  .editorGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .actions {
+    grid-template-columns: 1fr;
+  }
+}

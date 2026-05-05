@@ -1,0 +1,47 @@
+.logo {
+  align-items: center;
+  color: var(--color-primary);
+  display: inline-flex;
+  gap: 12px;
+}
+
+.mark {
+  flex: 0 0 auto;
+  height: 46px;
+  width: 46px;
+}
+
+.wordGroup {
+  display: grid;
+  gap: 2px;
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-size: 2.35rem;
+  line-height: 1;
+}
+
+.tagline {
+  color: var(--color-secondary);
+  font-family: var(--font-body);
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+@media (max-width: 640px) {
+  .mark {
+    height: 42px;
+    width: 42px;
+  }
+
+  .wordmark {
+    font-size: 2rem;
+  }
+
+  .tagline {
+    display: none;
+  }
+}

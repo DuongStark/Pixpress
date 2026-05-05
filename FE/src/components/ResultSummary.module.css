@@ -1,0 +1,65 @@
+.summary {
+  padding: var(--space-md);
+}
+
+.summary h2 {
+  font-size: 1rem;
+  margin: 0 0 var(--space-md);
+}
+
+.statusCard {
+  border: 1px solid var(--color-secondary);
+  display: grid;
+  gap: 4px;
+  margin-bottom: var(--space-md);
+  padding: 12px;
+}
+
+.statusCard strong {
+  font-size: 1rem;
+}
+
+.statusCard span {
+  color: var(--color-secondary);
+}
+
+.success {
+  background: rgba(26, 109, 175, 0.12);
+  border-color: var(--color-tertiary);
+}
+
+.warning {
+  background: rgba(122, 27, 27, 0.1);
+  border-color: #7a1b1b;
+}
+
+.summary dl {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+.summary dl div {
+  border-top: 1px solid var(--color-secondary);
+  display: grid;
+  gap: var(--space-sm);
+  grid-template-columns: minmax(130px, 0.45fr) 1fr;
+  min-width: 0;
+  padding: 10px 0;
+}
+
+.summary dt {
+  color: var(--color-secondary);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+
+.summary dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.reduction dd {
+  color: var(--color-tertiary);
+  font-weight: 600;
+}
