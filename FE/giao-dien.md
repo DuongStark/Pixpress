@@ -474,3 +474,230 @@ src/
 - User biết kết quả đạt hay chưa đạt mục tiêu.
 - User tải được ảnh.
 - Lỗi hiển thị gần nơi phát sinh, không làm treo trang.
+
+## 14. Cập nhật MVP: FE dùng Sharp pipeline thật từ BE
+
+FE không nên tạo kết quả giả bằng estimate khi nối với BE. Estimate chỉ dùng trước khi xử lý để user hiểu ảnh có thể về khoảng bao nhiêu KB.
+
+Luồng tích hợp BE:
+
+```txt
+Upload ảnh
+-> POST /api/images/upload
+-> BE trả imageId + metadata thật
+-> FE hiển thị metadata
+-> User chọn preset/options
+-> POST /api/images/resolve-options nếu cần preview config
+-> POST /api/images/process
+-> BE trả job thật + result thật + compliance
+-> FE mở /result/:jobId
+-> User tải file từ downloadUrl thật
+```
+
+Màn Upload cần dùng metadata từ BE:
+
+- Tên file.
+- Dung lượng file gốc.
+- Width/height gốc.
+- MIME/format.
+- Preview URL từ BE hoặc object URL local trong lúc chờ upload.
+- Lỗi upload: file quá lớn, sai định dạng, không đọc được ảnh.
+
+Màn Edit cần gửi options rõ:
+
+- `presetId`.
+- Format.
+- Quality.
+- Target dung lượng.
+- Resize width/height/fit.
+- Background mode/color/padding.
+- Remove background nếu user bật.
+
+Màn Result chỉ hiển thị số liệu từ BE:
+
+- Dung lượng result thật.
+- Kích thước result thật.
+- Format result thật.
+- `goal.passed`.
+- `downloadUrl`.
+- `compliance`.
+
+FE không được tự kết luận "đạt chuẩn sàn" chỉ bằng state local. Trạng thái cuối phải dựa trên response BE.
+
+## 15. Compliance Checker UI
+
+Compliance checker nên xuất hiện ở màn Result, và có thể preview nhanh ở Edit sau khi resolve options. UI cần phân biệt rule chắc và warning.
+
+Nhóm check chắc:
+
+- Kích thước.
+- Tỉ lệ.
+- Dung lượng.
+- Format.
+- Nền theo preset.
+- Trạng thái mục tiêu nén.
+
+Nhóm warning MVP:
+
+- Text/watermark.
+- Product coverage.
+- Product lệch tâm.
+- Nền sạch tuyệt đối.
+
+Copy nên trung thực:
+
+```txt
+Đạt rule kỹ thuật
+Cần kiểm tra thủ công
+Chưa đạt
+```
+
+Không dùng copy kiểu:
+
+```txt
+Chắc chắn được Shopee duyệt
+Chắc chắn được TikTok duyệt
+```
+
+UI đề xuất:
+
+```txt
+Compliance panel
+- Status badge: Đạt / Cần kiểm tra / Chưa đạt
+- Checklist rule chắc
+- Warning chưa xác minh
+- CTA chỉnh lại nếu failed
+```
+
+Ví dụ:
+
+```txt
+Đạt rule kỹ thuật
+✓ Kích thước: 1024x1024
+✓ Tỉ lệ: 1:1
+✓ Dung lượng: 438KB / 500KB
+✓ Format: WEBP
+✓ Nền: trắng
+! Text/watermark: Pixpress chưa kiểm tra chắc ở MVP
+! Product coverage: cần kiểm tra thủ công
+```
+
+## 16. Multi-Platform Export
+
+Multi-platform export cho phép user upload một ảnh và chọn nhiều nền tảng để Pixpress xuất nhiều file đúng preset từng nền tảng.
+
+Vị trí trong product:
+
+- Sau single-image pipeline thật.
+- Sau compliance checker.
+- Trước batch, vì flow vẫn chỉ có một ảnh gốc.
+
+Luồng:
+
+```txt
+Upload 1 ảnh
+-> Chọn chế độ "Xuất cho nhiều nền tảng"
+-> Tick Shopee, Lazada, TikTok Shop
+-> Pixpress xử lý từng preset
+-> Hiển thị kết quả từng nền tảng
+-> Tải ZIP hoặc tải từng ảnh
+```
+
+UI trong màn Edit:
+
+- Thêm toggle/chế độ: `Một nền tảng` / `Nhiều nền tảng`.
+- Khi chọn `Một nền tảng`: dùng PresetSelector hiện tại.
+- Khi chọn `Nhiều nền tảng`: hiển thị checkbox card cho Shopee, Lazada, TikTok Shop.
+- Ít nhất một nền tảng phải được chọn.
+- Shared settings áp dụng cho tất cả: remove background, nền trắng, padding nếu phù hợp.
+- Setting riêng theo nền tảng do BE preset quyết định: size, format, target dung lượng.
+
+Copy đề xuất:
+
+```txt
+Xuất một ảnh cho nhiều sàn
+Chọn các nền tảng bạn muốn đăng. Pixpress sẽ tạo file riêng theo preset từng nền tảng.
+```
+
+Màn Result multi-platform:
+
+- Hiển thị bảng/card theo nền tảng.
+- Mỗi nền tảng có thumbnail, format, kích thước, dung lượng, compliance status.
+- Nền tảng fail không làm mất kết quả nền tảng pass.
+- CTA chính: `Tải ZIP`.
+- CTA phụ: tải từng ảnh.
+
+Ví dụ:
+
+```txt
+Shopee       1024x1024  WEBP  438KB  Cần kiểm tra thủ công
+Lazada       1200x1200  JPG   612KB  Đạt rule kỹ thuật
+TikTok Shop  1080x1080  WEBP  501KB  Đạt rule kỹ thuật
+```
+
+Route có thể dùng:
+
+```txt
+/export/:exportId
+```
+
+Hoặc dùng `/result/:jobId` cho single-image và `/export/:exportId` cho multi-platform để tránh result model bị phình.
+
+Component đề xuất thêm:
+
+```txt
+MultiPlatformSelector.tsx
+ExportVariantCard.tsx
+ExportSummary.tsx
+ZipDownloadButton.tsx
+```
+
+## 17. Batch + Template sau single-image ổn định
+
+Batch là luồng sau MVP, không chen vào single-image flow khi pipeline thật chưa ổn. Mục tiêu batch đầu tiên là xử lý 20-50 ảnh bằng cùng công thức và tải ZIP.
+
+Route sau MVP:
+
+```txt
+/batch              Upload nhiều ảnh
+/batch/:batchId     Theo dõi batch
+/templates          Quản lý công thức đã lưu
+```
+
+Luồng batch:
+
+```txt
+Upload 20-50 ảnh
+-> Chọn preset hoặc template đã lưu
+-> Xem bảng ảnh + metadata
+-> Bấm xử lý batch
+-> Theo dõi progress từng ảnh
+-> Retry ảnh lỗi nếu cần
+-> Tải từng file hoặc download ZIP
+```
+
+Template nên lưu từ single-image options:
+
+- Tên template.
+- Preset.
+- Format.
+- Target dung lượng.
+- Resize/fit.
+- Background.
+- Padding.
+- Remove background.
+
+UI batch cần:
+
+- Bảng danh sách ảnh.
+- Trạng thái từng ảnh: pending, processing, completed, failed.
+- Dung lượng trước/sau.
+- Compliance status từng ảnh.
+- Retry từng ảnh.
+- Download ZIP.
+
+Giới hạn hiển thị rõ:
+
+```txt
+Tối đa 50 ảnh/lần. Mỗi ảnh tối đa 10MB.
+```

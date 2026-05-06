@@ -201,3 +201,66 @@ Tránh:
 - User biết vì sao ảnh chưa đạt.
 - User có bước tiếp theo rõ khi ảnh chưa đạt.
 - UI dùng tốt trên mobile.
+
+## 10. Compliance Checker Design
+
+Compliance checker là công cụ ra quyết định, không phải badge trang trí. Thiết kế cần làm user thấy rule nào chắc, rule nào chỉ là cảnh báo.
+
+Trạng thái:
+
+- `Đạt rule kỹ thuật`: dùng success.
+- `Cần kiểm tra thủ công`: dùng warning.
+- `Chưa đạt`: dùng danger.
+
+Checklist:
+
+- Mỗi dòng có icon trạng thái, tên rule, giá trị thực tế.
+- Rule fail cần có hành động gần đó: chỉnh kích thước, đổi format, giảm target, xử lý lại.
+- Warning text/watermark/product coverage phải dùng ngôn ngữ "chưa kiểm tra chắc", không nói như lỗi chắc chắn.
+
+Không nên:
+
+- Gộp mọi warning thành lỗi đỏ.
+- Hứa "chắc chắn được sàn duyệt".
+- Dùng đoạn giải thích dài trong panel.
+
+## 11. Multi-Platform Export Design
+
+Multi-platform export cần rõ là một ảnh gốc tạo nhiều file đầu ra. UI không nên làm user tưởng ba nền tảng dùng cùng một file.
+
+Selector:
+
+- Dùng segmented control: `Một nền tảng` / `Nhiều nền tảng`.
+- Khi nhiều nền tảng, dùng checkbox card nhỏ cho Shopee, Lazada, TikTok Shop.
+- Card selected cần hiển thị kích thước/format/target chính.
+- Không dùng dropdown multi-select vì khó quét trên mobile.
+
+Result:
+
+- Dùng danh sách variant theo nền tảng.
+- Mỗi variant có thumbnail nhỏ, nền tảng, kích thước, format, dung lượng, compliance badge.
+- CTA chính `Tải ZIP` đặt trên cùng hoặc cuối panel, disabled khi chưa có variant completed.
+- CTA tải từng ảnh đặt trong từng variant, nhỏ hơn CTA ZIP.
+
+Copy:
+
+- `Xuất cho nhiều sàn`.
+- `Tải ZIP`.
+- `Tải ảnh Shopee`.
+- `Lazada chưa đạt dung lượng mục tiêu`.
+
+## 12. Batch Design Sau MVP
+
+Batch dùng cho seller xử lý nhiều ảnh, nên layout cần dày thông tin hơn màn single-image.
+
+Màn batch nên giống bảng công việc:
+
+- Cột file/thumbnail.
+- Cột metadata gốc.
+- Cột preset/template.
+- Cột trạng thái.
+- Cột dung lượng trước/sau.
+- Cột compliance.
+- Hành động retry/download.
+
+Progress cần rõ từng ảnh và toàn batch. Download ZIP chỉ enabled khi có ít nhất một ảnh completed.

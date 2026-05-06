@@ -58,3 +58,37 @@ export type ProcessedJob = {
   };
   options: ProcessOptions;
 };
+
+export type ComplianceLevel = "pass" | "warning" | "fail";
+export type ComplianceStatus = "passed" | "needs_review" | "failed";
+
+export type ComplianceCheck = {
+  code: string;
+  level: ComplianceLevel;
+  label: string;
+  message: string;
+};
+
+export type ComplianceReport = {
+  status: ComplianceStatus;
+  checks: ComplianceCheck[];
+};
+
+export type ExportVariant = {
+  variantId: string;
+  platform: string;
+  presetId: string;
+  status: "completed";
+  result: ProcessedJob["result"];
+  goalPassed: boolean;
+  compliance: ComplianceReport;
+};
+
+export type MultiPlatformExport = {
+  exportId: string;
+  imageId: string;
+  status: "completed";
+  original: UploadedImage;
+  variants: ExportVariant[];
+  zipDownloadUrl: string;
+};

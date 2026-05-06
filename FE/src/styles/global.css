@@ -5,6 +5,11 @@
   --color-neutral: #e9e6dd;
   --color-surface: #f4f1e8;
   --color-on-primary: #f4f1e8;
+  --color-success: #168a4a;
+  --color-warning: #b86b00;
+  --color-danger: #b42318;
+  --color-line: var(--color-secondary);
+  --color-panel: var(--color-surface);
   --font-display: "VT323", "Courier New", monospace;
   --font-body: "IBM Plex Mono", "Courier New", monospace;
   --space-sm: 8px;
@@ -17,6 +22,10 @@
   --scrollbar-track-pixel: rgba(19, 19, 19, 0.16);
   --scrollbar-thumb: var(--color-primary);
   --scrollbar-thumb-hover: var(--color-tertiary);
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --shadow-panel: none;
 }
 
 * {

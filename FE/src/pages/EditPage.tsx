@@ -1,4 +1,4 @@
-import { ArrowLeft, Wand2 } from "lucide-react";
+import { ArrowLeft, Layers3, SlidersHorizontal, Wand2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import BackgroundControls from "../components/BackgroundControls";
@@ -6,6 +6,7 @@ import ErrorAlert from "../components/ErrorAlert";
 import FormatSelector from "../components/FormatSelector";
 import ImagePreview from "../components/ImagePreview";
 import LoadingButton from "../components/LoadingButton";
+import MultiPlatformSelector from "../components/MultiPlatformSelector";
 import OptimizationGoal from "../components/OptimizationGoal";
 import PresetSelector from "../components/PresetSelector";
 import QualitySlider from "../components/QualitySlider";
@@ -16,7 +17,7 @@ import { estimateResultSize } from "../lib/estimate";
 import { formatBytes } from "../lib/format";
 import { platformPresets } from "../lib/presets";
 import type { PlatformPreset } from "../lib/presets";
-import { createJob, getActiveImage } from "../lib/sessionStore";
+import { createJob, createMultiPlatformExport, getActiveImage } from "../lib/sessionStore";
 import type { BackgroundMode, FitMode, ImageFormat, OptimizationPriority, ProcessOptions } from "../types";
 import styles from "./EditPage.module.css";
 
@@ -42,6 +43,8 @@ export default function EditPage() {
   const [centerProduct, setCenterProduct] = useState(true);
   const [softShadow, setSoftShadow] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [outputMode, setOutputMode] = useState<"single" | "multi">("single");
+  const [selectedPlatformIds, setSelectedPlatformIds] = useState(["shopee-product", "lazada-product", "tiktok-shop"]);
 
   if (!image || image.imageId !== imageId) {
     return <Navigate to="/" replace />;
@@ -58,6 +61,7 @@ export default function EditPage() {
     currentOptions.resize.width ?? activeImage.width,
     currentOptions.resize.height ?? activeImage.height,
   );
+  const isMultiMode = outputMode === "multi";
 
   function handlePresetSelect(preset: PlatformPreset) {
     setSelectedPreset(preset);
@@ -100,6 +104,13 @@ export default function EditPage() {
 
     setIsProcessing(true);
     await new Promise((resolve) => window.setTimeout(resolve, 550));
+
+    if (isMultiMode) {
+      const exportJob = createMultiPlatformExport(activeImage, selectedPlatformIds, options);
+      navigate(`/export/${exportJob.exportId}`);
+      return;
+    }
+
     const job = createJob(activeImage, options);
     navigate(`/result/${job.jobId}`);
   }
@@ -143,10 +154,10 @@ export default function EditPage() {
         </div>
         <div className="threadMeta" aria-label={t.edit.settings}>
           <span>
-            {t.common.format} <strong>{format.toUpperCase()}</strong>
+            {language === "vi" ? "Chế độ" : "Mode"} <strong>{isMultiMode ? (language === "vi" ? "Nhiều sàn" : "Multi") : "Single"}</strong>
           </span>
           <span>
-            {language === "vi" ? "Preset" : "Preset"} <strong>{selectedPreset.name[language]}</strong>
+            {t.common.format} <strong>{isMultiMode ? `${selectedPlatformIds.length} files` : format.toUpperCase()}</strong>
           </span>
           <span>
             {language === "vi" ? "Mục tiêu" : "Target"} <strong>{maxSizeKb}KB</strong>
@@ -155,7 +166,27 @@ export default function EditPage() {
       </div>
 
       <div className={styles.editorGrid}>
-        <ImagePreview image={activeImage} />
+        <div className={styles.previewColumn}>
+          <ImagePreview image={activeImage} />
+          <div className={styles.quickStatus}>
+            <div>
+              <span>{language === "vi" ? "Đầu ra" : "Output"}</span>
+              <strong>
+                {isMultiMode ? `${selectedPlatformIds.length} ${language === "vi" ? "nền tảng" : "platforms"}` : selectedPreset.name[language]}
+              </strong>
+            </div>
+            <div>
+              <span>{language === "vi" ? "Kích thước" : "Size"}</span>
+              <strong>
+                {width || activeImage.width} x {height || activeImage.height}
+              </strong>
+            </div>
+            <div>
+              <span>{language === "vi" ? "Ước tính" : "Estimate"}</span>
+              <strong>{formatBytes(estimatedSize)}</strong>
+            </div>
+          </div>
+        </div>
 
         <aside className={styles.panel}>
           <div className={styles.panelHeader}>
@@ -163,91 +194,131 @@ export default function EditPage() {
             <span>{isProcessing ? t.common.running : t.common.ready}</span>
           </div>
 
-          <div className={styles.sectionDivider}>
-            <span>{language === "vi" ? "01 Preset" : "01 Preset"}</span>
-          </div>
-          <div className={styles.optionBlock}>
-            <PresetSelector
+          <div className={styles.modeSwitch} role="group" aria-label={language === "vi" ? "Kiểu xuất ảnh" : "Export mode"}>
+            <button
+              className={outputMode === "single" ? styles.activeMode : ""}
               disabled={isProcessing}
-              language={language}
-              selectedId={selectedPreset.id}
-              onSelect={handlePresetSelect}
-            />
-          </div>
-
-          <div className={styles.sectionDivider}>
-            <span>{language === "vi" ? "02 Mục tiêu" : "02 Goal"}</span>
-          </div>
-          <div className={styles.optionBlock}>
-            <OptimizationGoal
+              type="button"
+              onClick={() => setOutputMode("single")}
+            >
+              <Wand2 size={16} aria-hidden="true" />
+              {language === "vi" ? "Một nền tảng" : "Single"}
+            </button>
+            <button
+              className={outputMode === "multi" ? styles.activeMode : ""}
               disabled={isProcessing}
-              language={language}
-              maxSizeKb={maxSizeKb}
-              priority={priority}
-              onMaxSizeChange={setMaxSizeKb}
-              onPriorityChange={setPriority}
-            />
-          </div>
-
-          <div className={styles.sectionDivider}>
-            <span>{language === "vi" ? "03 Đầu ra" : "03 Output"}</span>
-          </div>
-          <div className={styles.optionBlock}>
-            <FormatSelector disabled={isProcessing} value={format} onChange={setFormat} />
+              type="button"
+              onClick={() => setOutputMode("multi")}
+            >
+              <Layers3 size={16} aria-hidden="true" />
+              {language === "vi" ? "Nhiều nền tảng" : "Multi-platform"}
+            </button>
           </div>
 
           <div className={styles.optionBlock}>
-            <QualitySlider
-              disabled={isProcessing}
-              estimatedSize={formatBytes(estimatedSize)}
-              value={quality}
-              onChange={setQuality}
-            />
+            {isMultiMode ? (
+              <MultiPlatformSelector
+                disabled={isProcessing}
+                language={language}
+                selectedIds={selectedPlatformIds}
+                onChange={setSelectedPlatformIds}
+              />
+            ) : (
+              <PresetSelector
+                disabled={isProcessing}
+                language={language}
+                selectedId={selectedPreset.id}
+                onSelect={handlePresetSelect}
+              />
+            )}
           </div>
 
-          <div className={styles.optionBlock}>
-            <ResizeControls
-              disabled={isProcessing}
-              fitMode={fitMode}
-              height={height}
-              keepAspectRatio={keepAspectRatio}
-              width={width}
-              onFitModeChange={setFitMode}
-              onHeightChange={handleHeightChange}
-              onKeepAspectRatioChange={setKeepAspectRatio}
-              onWidthChange={handleWidthChange}
-            />
-          </div>
+          <details className={styles.controlGroup} open>
+            <summary>
+              <span>
+                <SlidersHorizontal size={16} aria-hidden="true" />
+                {language === "vi" ? "Mục tiêu nén" : "Compression goal"}
+              </span>
+              <strong>{maxSizeKb}KB</strong>
+            </summary>
+            <div className={styles.optionBlock}>
+              <OptimizationGoal
+                disabled={isProcessing}
+                language={language}
+                maxSizeKb={maxSizeKb}
+                priority={priority}
+                onMaxSizeChange={setMaxSizeKb}
+                onPriorityChange={setPriority}
+              />
+            </div>
+          </details>
+
+          <details className={styles.controlGroup}>
+            <summary>
+              <span>
+                <SlidersHorizontal size={16} aria-hidden="true" />
+                {language === "vi" ? "Định dạng và kích thước" : "Format and size"}
+              </span>
+              <strong>{isMultiMode ? (language === "vi" ? "Theo preset" : "Preset") : format.toUpperCase()}</strong>
+            </summary>
+            <div className={styles.optionGrid}>
+              <div className={styles.optionBlock}>
+                <FormatSelector disabled={isProcessing || isMultiMode} value={format} onChange={setFormat} />
+              </div>
+              <div className={styles.optionBlock}>
+                <QualitySlider
+                  disabled={isProcessing || isMultiMode}
+                  estimatedSize={formatBytes(estimatedSize)}
+                  value={quality}
+                  onChange={setQuality}
+                />
+              </div>
+            </div>
+            <div className={styles.optionBlock}>
+              <ResizeControls
+                disabled={isProcessing || isMultiMode}
+                fitMode={fitMode}
+                height={height}
+                keepAspectRatio={keepAspectRatio}
+                width={width}
+                onFitModeChange={setFitMode}
+                onHeightChange={handleHeightChange}
+                onKeepAspectRatioChange={setKeepAspectRatio}
+                onWidthChange={handleWidthChange}
+              />
+            </div>
+          </details>
 
           {dimensionsInvalid ? <ErrorAlert message={t.edit.invalidDimensions} /> : null}
 
-          <div className={styles.sectionDivider}>
-            <span>{language === "vi" ? "04 Nền ảnh" : "04 Background"}</span>
-          </div>
-          <div className={`${styles.optionBlock} ${styles.featureBlock}`}>
-            <RemoveBackgroundToggle
-              checked={removeBackground}
-              disabled={isProcessing}
-              onChange={setRemoveBackground}
-            />
-          </div>
-
-          <div className={styles.optionBlock}>
-            <BackgroundControls
-              centerProduct={centerProduct}
-              color={backgroundColor}
-              disabled={isProcessing}
-              language={language}
-              mode={backgroundMode}
-              paddingPercent={paddingPercent}
-              softShadow={softShadow}
-              onCenterProductChange={setCenterProduct}
-              onColorChange={setBackgroundColor}
-              onModeChange={setBackgroundMode}
-              onPaddingChange={setPaddingPercent}
-              onSoftShadowChange={setSoftShadow}
-            />
-          </div>
+          <details className={styles.controlGroup}>
+            <summary>
+              <span>
+                <SlidersHorizontal size={16} aria-hidden="true" />
+                {language === "vi" ? "Nền và bố cục" : "Background and layout"}
+              </span>
+              <strong>{backgroundMode}</strong>
+            </summary>
+            <div className={`${styles.optionBlock} ${styles.featureBlock}`}>
+              <RemoveBackgroundToggle checked={removeBackground} disabled={isProcessing} onChange={setRemoveBackground} />
+            </div>
+            <div className={styles.optionBlock}>
+              <BackgroundControls
+                centerProduct={centerProduct}
+                color={backgroundColor}
+                disabled={isProcessing}
+                language={language}
+                mode={backgroundMode}
+                paddingPercent={paddingPercent}
+                softShadow={softShadow}
+                onCenterProductChange={setCenterProduct}
+                onColorChange={setBackgroundColor}
+                onModeChange={setBackgroundMode}
+                onPaddingChange={setPaddingPercent}
+                onSoftShadowChange={setSoftShadow}
+              />
+            </div>
+          </details>
 
           {warning ? <ErrorAlert message={warning} /> : null}
 
@@ -257,14 +328,14 @@ export default function EditPage() {
               {t.common.back}
             </Link>
             <LoadingButton
-              disabled={dimensionsInvalid}
+              disabled={dimensionsInvalid || (isMultiMode && selectedPlatformIds.length === 0)}
               isLoading={isProcessing}
               loadingLabel={t.edit.processing}
               type="button"
               onClick={handleProcess}
             >
-              <Wand2 size={18} aria-hidden="true" />
-              {t.edit.process}
+              {isMultiMode ? <Layers3 size={18} aria-hidden="true" /> : <Wand2 size={18} aria-hidden="true" />}
+              {isMultiMode ? (language === "vi" ? "Xuất nhiều nền tảng" : "Export variants") : t.edit.process}
             </LoadingButton>
           </div>
         </aside>

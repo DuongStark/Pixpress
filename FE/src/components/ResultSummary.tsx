@@ -83,6 +83,27 @@ export default function ResultSummary({ job }: ResultSummaryProps) {
           <dd>{reduction}%</dd>
         </div>
       </dl>
+      <section className={styles.compliance}>
+        <h3>{language === "vi" ? "Kiểm tra rule kỹ thuật" : "Technical checks"}</h3>
+        <ul>
+          <li className={styles.pass}>
+            <span>{language === "vi" ? "Kích thước" : "Dimensions"}</span>
+            <strong>{formatDimensions(job.result.width, job.result.height)}</strong>
+          </li>
+          <li className={styles.pass}>
+            <span>{language === "vi" ? "Định dạng" : "Format"}</span>
+            <strong>{job.result.format.toUpperCase()}</strong>
+          </li>
+          <li className={reachedGoal ? styles.pass : styles.fail}>
+            <span>{language === "vi" ? "Dung lượng" : "File size"}</span>
+            <strong>{reachedGoal ? language === "vi" ? "Đạt mục tiêu" : "Target hit" : language === "vi" ? "Chưa đạt" : "Missed"}</strong>
+          </li>
+          <li className={styles.warningCheck}>
+            <span>{language === "vi" ? "Text / sản phẩm" : "Text / product"}</span>
+            <strong>{language === "vi" ? "Cần kiểm tra thủ công" : "Manual review"}</strong>
+          </li>
+        </ul>
+      </section>
     </section>
   );
 }

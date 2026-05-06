@@ -1,9 +1,11 @@
-import { ProcessOptions, ProcessedJob, UploadedImage } from "../types";
+import { ComplianceReport, MultiPlatformExport, ProcessOptions, ProcessedJob, UploadedImage } from "../types";
 import { estimateResultSize } from "./estimate";
 import { imageMimeType } from "./format";
+import { platformPresets } from "./presets";
 
 const activeImageKey = "pixpress.activeImage";
 const jobsKey = "pixpress.jobs";
+const exportsKey = "pixpress.exports";
 
 type StoredImage = Omit<UploadedImage, "file">;
 
@@ -105,4 +107,133 @@ export function getJob(jobId: string): ProcessedJob | null {
 function getJobs(): Record<string, ProcessedJob> {
   const raw = sessionStorage.getItem(jobsKey);
   return raw ? (JSON.parse(raw) as Record<string, ProcessedJob>) : {};
+}
+
+export function createMultiPlatformExport(
+  image: UploadedImage,
+  presetIds: string[],
+  baseOptions: ProcessOptions,
+): MultiPlatformExport {
+  const exportId = createId("export");
+  const baseName = image.originalName.replace(/\.[^.]+$/, "") || "image";
+  const variants = presetIds
+    .map((presetId) => platformPresets.find((preset) => preset.id === presetId))
+    .filter((preset): preset is NonNullable<typeof preset> => Boolean(preset))
+    .map((preset) => {
+      const width = preset.width || image.width;
+      const height = preset.height || image.height;
+      const options: ProcessOptions = {
+        ...baseOptions,
+        format: preset.format,
+        quality: preset.quality,
+        resize: {
+          ...baseOptions.resize,
+          width,
+          height,
+          fitMode: preset.fitMode,
+        },
+        goal: {
+          maxSizeKb: preset.maxSizeKb,
+          priority: preset.priority,
+        },
+        background: {
+          ...baseOptions.background,
+          mode: preset.backgroundMode,
+          paddingPercent: preset.paddingPercent,
+        },
+        preset: {
+          id: preset.id,
+          name: preset.name.vi,
+        },
+      };
+      const size = estimateResultSize(image, options, width, height);
+      const goalPassed = size <= preset.maxSizeKb * 1024;
+      const platform = preset.name.vi.replace(" ảnh sản phẩm", "").replace(" product photo", "");
+
+      return {
+        variantId: createId("variant"),
+        platform,
+        presetId: preset.id,
+        status: "completed" as const,
+        result: {
+          fileName: `${baseName}-${preset.id.replace("-product", "").replace("-square", "")}.${preset.format}`,
+          format: preset.format,
+          mimeType: imageMimeType(preset.format),
+          size,
+          width,
+          height,
+          previewUrl: image.previewUrl,
+          downloadUrl: image.previewUrl,
+        },
+        goalPassed,
+        compliance: createCompliance(goalPassed, width, height, preset.maxSizeKb, preset.format.toUpperCase()),
+      };
+    });
+
+  const exportJob: MultiPlatformExport = {
+    exportId,
+    imageId: image.imageId,
+    status: "completed",
+    original: stripFile(image),
+    variants,
+    zipDownloadUrl: image.previewUrl,
+  };
+
+  const exports = getExports();
+  exports[exportId] = exportJob;
+  sessionStorage.setItem(exportsKey, JSON.stringify(exports));
+  return exportJob;
+}
+
+export function getExport(exportId: string): MultiPlatformExport | null {
+  return getExports()[exportId] ?? null;
+}
+
+function getExports(): Record<string, MultiPlatformExport> {
+  const raw = sessionStorage.getItem(exportsKey);
+  return raw ? (JSON.parse(raw) as Record<string, MultiPlatformExport>) : {};
+}
+
+function createCompliance(
+  goalPassed: boolean,
+  width: number,
+  height: number,
+  maxSizeKb: number,
+  format: string,
+): ComplianceReport {
+  return {
+    status: goalPassed ? "needs_review" : "failed",
+    checks: [
+      {
+        code: "DIMENSIONS",
+        level: "pass",
+        label: "Kích thước",
+        message: `${width} x ${height}px`,
+      },
+      {
+        code: "RATIO",
+        level: width === height ? "pass" : "warning",
+        label: "Tỉ lệ",
+        message: width === height ? "1:1" : `${width}:${height}`,
+      },
+      {
+        code: "FILE_SIZE",
+        level: goalPassed ? "pass" : "fail",
+        label: "Dung lượng",
+        message: goalPassed ? `Dưới mục tiêu ${maxSizeKb}KB` : `Vượt mục tiêu ${maxSizeKb}KB`,
+      },
+      {
+        code: "FORMAT",
+        level: "pass",
+        label: "Định dạng",
+        message: format,
+      },
+      {
+        code: "MANUAL_REVIEW",
+        level: "warning",
+        label: "Text / sản phẩm",
+        message: "Cần kiểm tra thủ công ở MVP.",
+      },
+    ],
+  };
 }

@@ -1076,3 +1076,241 @@ REMOVE_BG_TIMEOUT_MS=30000
 - Download được file kết quả.
 - Xóa temp file sau xử lý.
 - Lỗi API có format chuẩn.
+
+## 14. Cập nhật ưu tiên: Sharp pipeline thật
+
+MVP backend phải ưu tiên xử lý ảnh thật bằng Sharp trước khi thêm tính năng "wow". FE hiện có thể mô phỏng flow, nhưng BE cần tạo file kết quả thật để user tải xuống.
+
+Phạm vi bắt buộc:
+
+- Upload ảnh thật qua `POST /api/images/upload`.
+- Đọc metadata thật: width, height, MIME, format, byte size.
+- Validate file bằng Sharp, không chỉ tin `file.mimetype`.
+- Resize theo preset hoặc override.
+- Convert format: JPG, PNG, WEBP, AVIF nếu Sharp runtime hỗ trợ ổn định.
+- Nén theo quality.
+- Chạy compression loop để cố đạt `targetMaxBytes`.
+- Lưu result thật vào `storage/results`.
+- Trả preview/download URL thật.
+- Download file kết quả qua `GET /api/images/jobs/:jobId/download`.
+
+Không dùng estimate size làm kết quả cuối cùng ở BE. Estimate chỉ được dùng ở FE trước khi xử lý để gợi ý.
+
+Pipeline tối thiểu:
+
+```txt
+upload
+-> Sharp metadata
+-> resolve preset + overrides
+-> resize/crop/pad
+-> compose background nếu cần
+-> encode format + quality
+-> optimize to target size
+-> write result file
+-> evaluate goal
+-> return job
+```
+
+Response `job.result.size`, `job.result.width`, `job.result.height`, `job.result.format` phải lấy từ file đã render, không lấy từ request.
+
+## 15. Compliance Checker MVP
+
+Compliance checker nên làm sớm, nhưng chỉ check rule chắc. Mục tiêu là giúp user biết vì sao ảnh có thể chưa sẵn sàng đăng, không hứa chắc được sàn duyệt 100%.
+
+Rule chắc nên check:
+
+- Kích thước đầu ra: đúng width/height preset hoặc trong khoảng preset cho phép.
+- Tỉ lệ ảnh: ví dụ 1:1, 4:5, 9:16.
+- Dung lượng: `actualBytes <= targetMaxBytes`.
+- Format: nằm trong danh sách format preset cho phép.
+- Nền: kiểm tra theo option xử lý, ví dụ `background.mode = solid` và `background.color = #FFFFFF` cho preset cần nền trắng.
+- Trạng thái goal: `goal.passed = true/false`.
+
+Rule chỉ nên warning ở MVP:
+
+- Text/watermark trong ảnh.
+- Product coverage.
+- Product bị lệch tâm.
+- Nền có sạch tuyệt đối hay không.
+
+Lý do: các rule này cần computer vision hoặc OCR. Nếu detect sai, user mất niềm tin. MVP chỉ nên hiển thị là "cần kiểm tra thủ công" hoặc "Pixpress chưa xác nhận chắc".
+
+Data model đề xuất:
+
+```json
+{
+  "compliance": {
+    "presetId": "shopee-product-square",
+    "status": "passed",
+    "checks": [
+      {
+        "code": "DIMENSIONS",
+        "level": "pass",
+        "label": "Kích thước",
+        "message": "1024x1024 đúng preset."
+      },
+      {
+        "code": "FILE_SIZE",
+        "level": "pass",
+        "label": "Dung lượng",
+        "message": "438KB dưới mục tiêu 500KB."
+      }
+    ],
+    "warnings": [
+      {
+        "code": "TEXT_WATERMARK_UNVERIFIED",
+        "label": "Text/watermark",
+        "message": "Pixpress chưa kiểm tra chắc text hoặc watermark trong MVP."
+      }
+    ]
+  }
+}
+```
+
+`status` nên có:
+
+```txt
+passed
+needs_review
+failed
+```
+
+Nếu rule chắc fail, status là `failed`. Nếu rule chắc pass nhưng còn warning chưa xác minh, status là `needs_review`. Nếu tất cả rule chắc pass và không có warning bắt buộc, status là `passed`.
+
+## 16. Multi-Platform Export
+
+Multi-platform export là tính năng nên làm sau khi single-image pipeline và compliance checker ổn định, trước batch. Đây là flow: một ảnh gốc, user chọn nhiều nền tảng, BE xuất nhiều file phù hợp rule từng nền tảng.
+
+Ví dụ:
+
+```txt
+1 ảnh gốc
+-> Chọn Shopee + Lazada + TikTok Shop
+-> BE resolve 3 preset
+-> Render 3 output riêng
+-> Check compliance từng output
+-> Trả ZIP có thư mục theo nền tảng
+```
+
+Nguyên tắc:
+
+- Mỗi nền tảng dùng preset riêng ở BE, không để FE tự hard-code rule.
+- Mỗi output có `jobId` hoặc `variantId` riêng.
+- Mỗi output có result metadata riêng: size, width, height, format, goal, compliance.
+- Nếu một nền tảng fail, các nền tảng còn lại vẫn được trả về nếu xử lý thành công.
+- Download ZIP là lựa chọn chính; download từng file vẫn nên hỗ trợ.
+
+API đề xuất:
+
+```http
+POST /api/images/export-platforms
+GET /api/exports/:exportId
+GET /api/exports/:exportId/download.zip
+GET /api/exports/:exportId/variants/:variantId/download
+```
+
+Request:
+
+```json
+{
+  "imageId": "img_123",
+  "platformPresetIds": [
+    "shopee-product-square",
+    "lazada-product-square",
+    "tiktok-shop-product-square"
+  ],
+  "sharedOverrides": {
+    "background": {
+      "remove": true,
+      "mode": "solid",
+      "color": "#FFFFFF"
+    }
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "exportId": "export_123",
+    "status": "completed",
+    "variants": [
+      {
+        "variantId": "variant_shopee",
+        "presetId": "shopee-product-square",
+        "platform": "Shopee",
+        "status": "completed",
+        "result": {
+          "fileName": "product-shopee.webp",
+          "format": "webp",
+          "size": 438000,
+          "width": 1024,
+          "height": 1024,
+          "downloadUrl": "/api/exports/export_123/variants/variant_shopee/download"
+        },
+        "goal": {
+          "passed": true
+        },
+        "compliance": {
+          "status": "needs_review"
+        }
+      }
+    ],
+    "zipDownloadUrl": "/api/exports/export_123/download.zip"
+  }
+}
+```
+
+ZIP structure:
+
+```txt
+pixpress-export.zip
+├── shopee/
+│   └── product-shopee.webp
+├── lazada/
+│   └── product-lazada.jpg
+└── tiktok-shop/
+    └── product-tiktok-shop.webp
+```
+
+MVP của multi-platform export chỉ cần nhóm ecommerce: Shopee, Lazada, TikTok Shop. Social/website có thể thêm sau vì intent khác.
+
+## 17. Batch + Template sau single-image
+
+Batch là tính năng quan trọng cho seller, nhưng chỉ nên làm sau khi single-image pipeline chạy ổn định. Không đưa batch vào MVP nếu upload/process/download một ảnh chưa thật sự chắc.
+
+Phạm vi batch phiên bản đầu:
+
+- Upload 20-50 ảnh/lần.
+- Chọn một preset/template áp dụng cho toàn bộ batch.
+- Lưu template từ options của single-image flow.
+- Xử lý từng ảnh bằng cùng Sharp pipeline.
+- Có progress từng ảnh.
+- Cho retry từng ảnh lỗi.
+- Cho tải từng ảnh hoặc tải ZIP.
+
+API đề xuất sau MVP:
+
+```http
+POST /api/batches
+POST /api/batches/:batchId/images
+POST /api/batches/:batchId/process
+GET /api/batches/:batchId
+GET /api/batches/:batchId/download.zip
+POST /api/templates
+GET /api/templates
+```
+
+Giới hạn MVP batch:
+
+```txt
+MAX_BATCH_IMAGES=50
+MAX_BATCH_FILE_SIZE_MB=10
+MAX_BATCH_TOTAL_SIZE_MB=300
+MAX_PARALLEL_PROCESS=2
+```
+
+Khi batch chạy, BE nên dùng queue hoặc worker nhẹ. Nếu chưa dùng Redis/BullMQ, có thể xử lý tuần tự trong process với status in-memory cho bản prototype, nhưng cần ghi rõ hạn chế.
