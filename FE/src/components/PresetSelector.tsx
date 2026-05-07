@@ -1,7 +1,8 @@
-import { Check } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Check, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import type { Language } from "../i18n";
 import { PlatformPreset, platformPresets } from "../lib/presets";
+import { fetchPresets, convertApiPresetToPlatformPreset } from "../lib/api";
 import styles from "./PresetSelector.module.css";
 
 type PresetSelectorProps = {
@@ -12,11 +13,45 @@ type PresetSelectorProps = {
 };
 
 export default function PresetSelector({ language, selectedId, disabled = false, onSelect }: PresetSelectorProps) {
-  const groups = useMemo(() => Array.from(new Set(platformPresets.map((preset) => preset.group[language]))), [language]);
-  const selectedPreset = platformPresets.find((preset) => preset.id === selectedId);
+  const [presets, setPresets] = useState<PlatformPreset[]>(platformPresets);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadPresets() {
+      try {
+        const apiPresets = await fetchPresets();
+        const converted = apiPresets.map((p) => convertApiPresetToPlatformPreset(p, language));
+        setPresets(converted);
+      } catch (err) {
+        console.warn("Failed to fetch presets from API, using local presets:", err);
+        setError("Using offline presets");
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadPresets();
+  }, [language]);
+
+  const groups = useMemo(() => Array.from(new Set(presets.map((preset) => preset.group[language]))), [presets, language]);
+  const selectedPreset = presets.find((preset) => preset.id === selectedId);
   const selectedGroup = selectedPreset?.group[language] ?? groups[0];
   const [activeGroup, setActiveGroup] = useState(selectedGroup);
   const visibleGroup = groups.includes(activeGroup) ? activeGroup : selectedGroup;
+
+  if (loading) {
+    return (
+      <section className={styles.selector} aria-labelledby="preset-title">
+        <div className={styles.titleRow}>
+          <h2 id="preset-title">{language === "vi" ? "Nơi đăng" : "Publishing target"}</h2>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "20px" }}>
+          <Loader2 className={styles.spinner} size={20} />
+          <span>{language === "vi" ? "Đang tải preset..." : "Loading presets..."}</span>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className={styles.selector} aria-labelledby="preset-title">
@@ -24,6 +59,7 @@ export default function PresetSelector({ language, selectedId, disabled = false,
         <div>
           <h2 id="preset-title">{language === "vi" ? "Nơi đăng" : "Publishing target"}</h2>
           <p>{language === "vi" ? "Chọn preset để tự điền format, kích thước, nền và mục tiêu." : "Choose a preset to fill format, size, background, and target."}</p>
+          {error && <p style={{ fontSize: "12px", color: "#888" }}>{error}</p>}
         </div>
       </div>
 
@@ -44,7 +80,7 @@ export default function PresetSelector({ language, selectedId, disabled = false,
 
       <div className={styles.group}>
         <div className={styles.grid}>
-          {platformPresets
+          {presets
             .filter((preset) => preset.group[language] === visibleGroup)
             .map((preset) => {
               const selected = preset.id === selectedId;
