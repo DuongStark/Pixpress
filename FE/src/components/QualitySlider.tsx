@@ -14,7 +14,7 @@ export default function QualitySlider({ value, estimatedSize, disabled = false, 
   return (
     <label className={styles.field}>
       <span>
-        {t.common.quality} <strong>{value}</strong>
+        {language === "vi" ? "Chất lượng ảnh" : t.common.quality} <strong>{value}</strong>
       </span>
       {estimatedSize ? (
         <span className={styles.estimate}>

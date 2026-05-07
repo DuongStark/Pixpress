@@ -29,9 +29,9 @@ export default function OptimizationGoal({
 }: OptimizationGoalProps) {
   return (
     <fieldset className={styles.fieldset}>
-      <legend>{language === "vi" ? "Mục tiêu" : "Goal"}</legend>
+      <legend>{language === "vi" ? "Dung lượng tối đa" : "Max file size"}</legend>
       <label className={styles.inputLabel}>
-        {language === "vi" ? "Dung lượng tối đa" : "Max file size"}
+        {language === "vi" ? "Giới hạn dung lượng" : "File size limit"}
         <span>
           <input
             disabled={disabled}
@@ -43,7 +43,7 @@ export default function OptimizationGoal({
           <strong>KB</strong>
         </span>
       </label>
-      <div className={styles.segmented} role="group" aria-label={language === "vi" ? "Ưu tiên" : "Priority"}>
+      <div className={styles.segmented} role="group" aria-label={language === "vi" ? "Ưu tiên tối ưu" : "Optimization priority"}>
         {priorities.map((option) => (
           <button
             className={option === priority ? styles.active : ""}

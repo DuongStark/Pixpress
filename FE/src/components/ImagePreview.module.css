@@ -86,6 +86,133 @@
   width: auto;
 }
 
+.cropFrame {
+  align-items: center;
+  background:
+    linear-gradient(45deg, rgba(19, 19, 19, 0.055) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(19, 19, 19, 0.055) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(19, 19, 19, 0.055) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(19, 19, 19, 0.055) 75%),
+    #2b2b2b;
+  background-position:
+    0 0,
+    0 10px,
+    10px -10px,
+    -10px 0;
+  background-size: 20px 20px;
+  border-bottom: 1px solid rgba(94, 94, 94, 0.45);
+  display: flex;
+  height: clamp(300px, 48vh, 560px);
+  justify-content: center;
+  overflow: hidden;
+  padding: 18px;
+}
+
+.cropStage {
+  align-items: center;
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  max-height: 100%;
+  max-width: 100%;
+  touch-action: none;
+  user-select: none;
+  width: 100%;
+}
+
+.cropStage.dragging {
+  cursor: grabbing;
+}
+
+.cropBox {
+  background: #f6f3ea;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.9),
+    0 14px 36px rgba(0, 0, 0, 0.34);
+  max-height: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.cropBox img {
+  height: 100%;
+  left: 0;
+  max-height: none;
+  max-width: none;
+  object-fit: fill;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  transform: none;
+  width: 100%;
+}
+
+.cropSelection {
+  border: 2px solid #3b82f6;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.52);
+  cursor: grab;
+  position: absolute;
+  touch-action: none;
+  z-index: 3;
+}
+
+.cropSelection::before,
+.cropSelection::after {
+  content: "";
+  inset: 33.333%;
+  pointer-events: none;
+  position: absolute;
+}
+
+.cropSelection::before {
+  border-left: 1px solid rgba(59, 130, 246, 0.45);
+  border-right: 1px solid rgba(59, 130, 246, 0.45);
+}
+
+.cropSelection::after {
+  border-bottom: 1px solid rgba(59, 130, 246, 0.45);
+  border-top: 1px solid rgba(59, 130, 246, 0.45);
+}
+
+.dragging .cropSelection {
+  cursor: grabbing;
+}
+
+.cropHandle {
+  background: #3b82f6;
+  border: 1px solid #ffffff;
+  height: 9px;
+  position: absolute;
+  width: 9px;
+  z-index: 4;
+}
+
+.nw {
+  cursor: nwse-resize;
+  left: -5px;
+  top: -5px;
+}
+
+.ne {
+  cursor: nesw-resize;
+  right: -5px;
+  top: -5px;
+}
+
+.sw {
+  bottom: -5px;
+  cursor: nesw-resize;
+  left: -5px;
+}
+
+.se {
+  bottom: -5px;
+  cursor: nwse-resize;
+  right: -5px;
+}
+
 @keyframes panelIn {
   from {
     opacity: 0;
@@ -152,6 +279,11 @@
 
 @media (max-width: 640px) {
   .imageFrame {
+    height: 300px;
+    padding: 12px;
+  }
+
+  .cropFrame {
     height: 300px;
     padding: 12px;
   }

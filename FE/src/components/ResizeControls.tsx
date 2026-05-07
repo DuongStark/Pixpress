@@ -7,9 +7,9 @@ import styles from "./ResizeControls.module.css";
 const fitModes: FitMode[] = ["contain", "cover", "pad"];
 
 const fitLabels: Record<FitMode, Record<Language, string>> = {
-  contain: { en: "Fit inside", vi: "Vừa khung" },
-  cover: { en: "Fill crop", vi: "Cắt đầy khung" },
-  pad: { en: "Add padding", vi: "Thêm viền" },
+  contain: { en: "Keep full image", vi: "Giữ đủ ảnh" },
+  cover: { en: "Crop to frame", vi: "Cắt theo khung" },
+  pad: { en: "Add background", vi: "Thêm nền trắng" },
 };
 
 type ResizeControlsProps = {
@@ -22,6 +22,7 @@ type ResizeControlsProps = {
   onHeightChange: (height: number | null) => void;
   onKeepAspectRatioChange: (value: boolean) => void;
   onFitModeChange: (value: FitMode) => void;
+  onCropReset: () => void;
 };
 
 export default function ResizeControls({
@@ -34,6 +35,7 @@ export default function ResizeControls({
   onHeightChange,
   onKeepAspectRatioChange,
   onFitModeChange,
+  onCropReset,
 }: ResizeControlsProps) {
   const { language, t } = useI18n();
 
@@ -72,7 +74,7 @@ export default function ResizeControls({
         <Lock size={16} aria-hidden="true" />
         {t.controls.keepAspect}
       </label>
-      <div className={styles.segmented} role="group" aria-label={language === "vi" ? "Kiểu fit" : "Fit mode"}>
+      <div className={styles.segmented} role="group" aria-label={language === "vi" ? "Cách canh ảnh" : "Image framing"}>
         {fitModes.map((mode) => (
           <button
             className={fitMode === mode ? styles.active : ""}
@@ -85,6 +87,13 @@ export default function ResizeControls({
           </button>
         ))}
       </div>
+      {fitMode === "cover" ? (
+        <div className={styles.cropControls}>
+          <button className={styles.resetCrop} disabled={disabled} type="button" onClick={onCropReset}>
+            {language === "vi" ? "Đặt lại khung" : "Reset crop"}
+          </button>
+        </div>
+      ) : null}
     </fieldset>
   );
 }

@@ -23,6 +23,12 @@ export type ProcessOptions = {
     keepAspectRatio: boolean;
     fitMode: FitMode;
   };
+  crop: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
   removeBackground: boolean;
   goal: {
     maxSizeKb: number;

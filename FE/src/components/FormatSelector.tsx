@@ -36,10 +36,10 @@ export default function FormatSelector({ value, disabled = false, onChange }: Fo
 
 function getFormatTooltip(format: ImageFormat, language: "en" | "vi"): string {
   const text: Record<ImageFormat, Record<"en" | "vi", string>> = {
-    jpg: { en: "JPG: common photo format, small files, no transparency.", vi: "JPG: ảnh phổ biến, nhẹ, không có nền trong suốt." },
+    jpg: { en: "JPG: common photo format, small files, no transparency.", vi: "JPG: phổ biến, file nhẹ, không có nền trong suốt." },
     png: { en: "PNG: supports transparency, often heavier.", vi: "PNG: có nền trong suốt, thường nặng hơn." },
     webp: { en: "WEBP: modern web format, good compression.", vi: "WEBP: định dạng web hiện đại, nén tốt." },
-    avif: { en: "AVIF: very small files, slower and less universally accepted.", vi: "AVIF: file rất nhẹ, chậm hơn và không phải nơi nào cũng nhận." },
+    avif: { en: "AVIF: very small files, slower and less universally accepted.", vi: "AVIF: file rất nhẹ, xử lý chậm hơn và không phải nơi nào cũng nhận." },
   };
 
   return text[format][language];

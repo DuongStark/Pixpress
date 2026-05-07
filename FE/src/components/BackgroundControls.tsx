@@ -42,7 +42,7 @@ export default function BackgroundControls({
 }: BackgroundControlsProps) {
   return (
     <fieldset className={styles.fieldset}>
-      <legend>{language === "vi" ? "Nền và padding" : "Background and padding"}</legend>
+      <legend>{language === "vi" ? "Màu nền và khoảng cách" : "Background and padding"}</legend>
       <div className={styles.segmented}>
         {backgroundModes.map((option) => (
           <button
@@ -64,7 +64,7 @@ export default function BackgroundControls({
       ) : null}
       <label className={styles.range}>
         <span>
-          {language === "vi" ? "Padding" : "Padding"} <strong>{paddingPercent}%</strong>
+          {language === "vi" ? "Khoảng cách viền" : "Padding"} <strong>{paddingPercent}%</strong>
         </span>
         <input
           disabled={disabled}

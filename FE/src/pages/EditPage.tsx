@@ -1,4 +1,4 @@
-import { ArrowLeft, Layers3, SlidersHorizontal, Wand2 } from "lucide-react";
+import { ArrowLeft, Layers3, Wand2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import BackgroundControls from "../components/BackgroundControls";
@@ -13,11 +13,12 @@ import QualitySlider from "../components/QualitySlider";
 import RemoveBackgroundToggle from "../components/RemoveBackgroundToggle";
 import ResizeControls from "../components/ResizeControls";
 import { useI18n } from "../i18n";
+import { processImageOnClient } from "../lib/clientImageProcessor";
 import { estimateResultSize } from "../lib/estimate";
 import { formatBytes } from "../lib/format";
 import { platformPresets } from "../lib/presets";
 import type { PlatformPreset } from "../lib/presets";
-import { createJob, createMultiPlatformExport, getActiveImage } from "../lib/sessionStore";
+import { createJobFromClientResult, createMultiPlatformExport, getActiveImage } from "../lib/sessionStore";
 import type { BackgroundMode, FitMode, ImageFormat, OptimizationPriority, ProcessOptions } from "../types";
 import styles from "./EditPage.module.css";
 
@@ -34,7 +35,9 @@ export default function EditPage() {
   const [height, setHeight] = useState<number | null>(initialPreset.height || image?.height || null);
   const [keepAspectRatio, setKeepAspectRatio] = useState(true);
   const [fitMode, setFitMode] = useState<FitMode>(initialPreset.fitMode);
-  const [removeBackground, setRemoveBackground] = useState(initialPreset.removeBackground);
+  const [cropRect, setCropRect] = useState(() =>
+    image ? getDefaultCropRect(image.width, image.height, initialPreset.width || image.width, initialPreset.height || image.height) : fullCropRect(),
+  );
   const [maxSizeKb, setMaxSizeKb] = useState(initialPreset.maxSizeKb);
   const [priority, setPriority] = useState<OptimizationPriority>(initialPreset.priority);
   const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>(initialPreset.backgroundMode);
@@ -43,6 +46,7 @@ export default function EditPage() {
   const [centerProduct, setCenterProduct] = useState(true);
   const [softShadow, setSoftShadow] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processError, setProcessError] = useState<string | null>(null);
   const [outputMode, setOutputMode] = useState<"single" | "multi">("single");
   const [selectedPlatformIds, setSelectedPlatformIds] = useState(["shopee-product", "lazada-product", "tiktok-shop"]);
 
@@ -53,7 +57,6 @@ export default function EditPage() {
   const activeImage = image;
   const aspectRatio = activeImage.width / activeImage.height;
   const dimensionsInvalid = isInvalidDimension(width) || isInvalidDimension(height);
-  const warning = getWarning(format, removeBackground, t);
   const currentOptions = createOptions();
   const estimatedSize = estimateResultSize(
     activeImage,
@@ -62,6 +65,7 @@ export default function EditPage() {
     currentOptions.resize.height ?? activeImage.height,
   );
   const isMultiMode = outputMode === "multi";
+  const outputLabel = isMultiMode ? `${selectedPlatformIds.length} ${language === "vi" ? "nền tảng" : "platforms"}` : selectedPreset.name[language];
 
   function handlePresetSelect(preset: PlatformPreset) {
     setSelectedPreset(preset);
@@ -70,12 +74,12 @@ export default function EditPage() {
     setWidth(preset.width || activeImage.width);
     setHeight(preset.height || activeImage.height);
     setFitMode(preset.fitMode);
-    setRemoveBackground(preset.removeBackground);
+    setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, preset.width || activeImage.width, preset.height || activeImage.height));
     setMaxSizeKb(preset.maxSizeKb);
     setPriority(preset.priority);
     setBackgroundMode(preset.backgroundMode);
     setPaddingPercent(preset.paddingPercent);
-    setCenterProduct(preset.paddingPercent > 0 || preset.removeBackground);
+    setCenterProduct(preset.paddingPercent > 0);
     setSoftShadow(false);
   }
 
@@ -103,16 +107,23 @@ export default function EditPage() {
     const options = createOptions();
 
     setIsProcessing(true);
-    await new Promise((resolve) => window.setTimeout(resolve, 550));
+    setProcessError(null);
 
-    if (isMultiMode) {
-      const exportJob = createMultiPlatformExport(activeImage, selectedPlatformIds, options);
-      navigate(`/export/${exportJob.exportId}`);
-      return;
+    try {
+      if (isMultiMode) {
+        const exportJob = createMultiPlatformExport(activeImage, selectedPlatformIds, options);
+        navigate(`/export/${exportJob.exportId}`);
+        return;
+      }
+
+      const result = await processImageOnClient(activeImage, options);
+      const job = createJobFromClientResult(activeImage, options, result);
+      navigate(`/result/${job.jobId}`);
+    } catch (err) {
+      setProcessError(err instanceof Error ? err.message : t.errors.processImage);
+    } finally {
+      setIsProcessing(false);
     }
-
-    const job = createJob(activeImage, options);
-    navigate(`/result/${job.jobId}`);
   }
 
   function createOptions(): ProcessOptions {
@@ -125,7 +136,13 @@ export default function EditPage() {
         keepAspectRatio,
         fitMode,
       },
-      removeBackground,
+      crop: {
+        x: cropRect.x,
+        y: cropRect.y,
+        width: cropRect.width,
+        height: cropRect.height,
+      },
+      removeBackground: false,
       goal: {
         maxSizeKb,
         priority,
@@ -154,35 +171,37 @@ export default function EditPage() {
         </div>
         <div className="threadMeta" aria-label={t.edit.settings}>
           <span>
-            {language === "vi" ? "Chế độ" : "Mode"} <strong>{isMultiMode ? (language === "vi" ? "Nhiều sàn" : "Multi") : "Single"}</strong>
+            {t.edit.output} <strong>{outputLabel}</strong>
           </span>
           <span>
             {t.common.format} <strong>{isMultiMode ? `${selectedPlatformIds.length} files` : format.toUpperCase()}</strong>
           </span>
           <span>
-            {language === "vi" ? "Mục tiêu" : "Target"} <strong>{maxSizeKb}KB</strong>
+            {t.edit.target} <strong>{maxSizeKb}KB</strong>
           </span>
         </div>
       </div>
 
       <div className={styles.editorGrid}>
         <div className={styles.previewColumn}>
-          <ImagePreview image={activeImage} />
+          <ImagePreview
+            cropOptions={fitMode === "cover" ? currentOptions : undefined}
+            image={activeImage}
+            onCropChange={setCropRect}
+          />
           <div className={styles.quickStatus}>
             <div>
-              <span>{language === "vi" ? "Đầu ra" : "Output"}</span>
-              <strong>
-                {isMultiMode ? `${selectedPlatformIds.length} ${language === "vi" ? "nền tảng" : "platforms"}` : selectedPreset.name[language]}
-              </strong>
+              <span>{t.edit.output}</span>
+              <strong>{outputLabel}</strong>
             </div>
             <div>
-              <span>{language === "vi" ? "Kích thước" : "Size"}</span>
+              <span>{t.common.dimensions}</span>
               <strong>
                 {width || activeImage.width} x {height || activeImage.height}
               </strong>
             </div>
             <div>
-              <span>{language === "vi" ? "Ước tính" : "Estimate"}</span>
+              <span>{t.edit.estimate}</span>
               <strong>{formatBytes(estimatedSize)}</strong>
             </div>
           </div>
@@ -190,137 +209,154 @@ export default function EditPage() {
 
         <aside className={styles.panel}>
           <div className={styles.panelHeader}>
-            <span>{language === "vi" ? "Chuẩn bị ảnh đăng" : "Publish setup"}</span>
+            <span>{t.edit.controls}</span>
             <span>{isProcessing ? t.common.running : t.common.ready}</span>
           </div>
 
-          <div className={styles.modeSwitch} role="group" aria-label={language === "vi" ? "Kiểu xuất ảnh" : "Export mode"}>
-            <button
-              className={outputMode === "single" ? styles.activeMode : ""}
-              disabled={isProcessing}
-              type="button"
-              onClick={() => setOutputMode("single")}
-            >
-              <Wand2 size={16} aria-hidden="true" />
-              {language === "vi" ? "Một nền tảng" : "Single"}
-            </button>
-            <button
-              className={outputMode === "multi" ? styles.activeMode : ""}
-              disabled={isProcessing}
-              type="button"
-              onClick={() => setOutputMode("multi")}
-            >
-              <Layers3 size={16} aria-hidden="true" />
-              {language === "vi" ? "Nhiều nền tảng" : "Multi-platform"}
-            </button>
-          </div>
-
-          <div className={styles.optionBlock}>
-            {isMultiMode ? (
-              <MultiPlatformSelector
-                disabled={isProcessing}
-                language={language}
-                selectedIds={selectedPlatformIds}
-                onChange={setSelectedPlatformIds}
-              />
-            ) : (
-              <PresetSelector
-                disabled={isProcessing}
-                language={language}
-                selectedId={selectedPreset.id}
-                onSelect={handlePresetSelect}
-              />
-            )}
-          </div>
-
-          <details className={styles.controlGroup} open>
-            <summary>
-              <span>
-                <SlidersHorizontal size={16} aria-hidden="true" />
-                {language === "vi" ? "Mục tiêu nén" : "Compression goal"}
-              </span>
-              <strong>{maxSizeKb}KB</strong>
-            </summary>
-            <div className={styles.optionBlock}>
-              <OptimizationGoal
-                disabled={isProcessing}
-                language={language}
-                maxSizeKb={maxSizeKb}
-                priority={priority}
-                onMaxSizeChange={setMaxSizeKb}
-                onPriorityChange={setPriority}
-              />
-            </div>
-          </details>
-
-          <details className={styles.controlGroup}>
-            <summary>
-              <span>
-                <SlidersHorizontal size={16} aria-hidden="true" />
-                {language === "vi" ? "Định dạng và kích thước" : "Format and size"}
-              </span>
-              <strong>{isMultiMode ? (language === "vi" ? "Theo preset" : "Preset") : format.toUpperCase()}</strong>
-            </summary>
-            <div className={styles.optionGrid}>
-              <div className={styles.optionBlock}>
-                <FormatSelector disabled={isProcessing || isMultiMode} value={format} onChange={setFormat} />
+          <div className={styles.stepList}>
+            <section className={styles.step}>
+              <div className={styles.stepHeader}>
+                <span className={styles.stepNumber}>1</span>
+                <div>
+                  <h2>{t.edit.stepTarget}</h2>
+                  <p>{t.edit.targetHelp}</p>
+                </div>
               </div>
-              <div className={styles.optionBlock}>
-                <QualitySlider
+              <div className={styles.stepBody}>
+                {isMultiMode ? (
+                  <MultiPlatformSelector
+                    disabled={isProcessing}
+                    language={language}
+                    selectedIds={selectedPlatformIds}
+                    onChange={setSelectedPlatformIds}
+                  />
+                ) : (
+                  <PresetSelector
+                    disabled={isProcessing}
+                    language={language}
+                    selectedId={selectedPreset.id}
+                    onSelect={handlePresetSelect}
+                  />
+                )}
+              </div>
+            </section>
+
+            <section className={styles.step}>
+              <div className={styles.stepHeader}>
+                <span className={styles.stepNumber}>2</span>
+                <div>
+                  <h2>{t.edit.stepLayout}</h2>
+                  <p>{t.edit.layoutHelp}</p>
+                </div>
+              </div>
+              <div className={styles.stepBody}>
+                <ResizeControls
                   disabled={isProcessing || isMultiMode}
-                  estimatedSize={formatBytes(estimatedSize)}
-                  value={quality}
-                  onChange={setQuality}
+                  fitMode={fitMode}
+                  height={height}
+                  keepAspectRatio={keepAspectRatio}
+                  width={width}
+                  onCropReset={() => {
+                    setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, width || activeImage.width, height || activeImage.height));
+                  }}
+                  onFitModeChange={setFitMode}
+                  onHeightChange={handleHeightChange}
+                  onKeepAspectRatioChange={setKeepAspectRatio}
+                  onWidthChange={handleWidthChange}
                 />
               </div>
-            </div>
-            <div className={styles.optionBlock}>
-              <ResizeControls
-                disabled={isProcessing || isMultiMode}
-                fitMode={fitMode}
-                height={height}
-                keepAspectRatio={keepAspectRatio}
-                width={width}
-                onFitModeChange={setFitMode}
-                onHeightChange={handleHeightChange}
-                onKeepAspectRatioChange={setKeepAspectRatio}
-                onWidthChange={handleWidthChange}
-              />
-            </div>
-          </details>
+            </section>
+
+            <section className={styles.step}>
+              <div className={styles.stepHeader}>
+                <span className={styles.stepNumber}>3</span>
+                <div>
+                  <h2>{t.edit.stepOutput}</h2>
+                  <p>{t.edit.outputHelp}</p>
+                </div>
+              </div>
+              <div className={styles.stepBody}>
+                <div className={styles.outputGrid}>
+                  <FormatSelector disabled={isProcessing || isMultiMode} value={format} onChange={setFormat} />
+                  <QualitySlider
+                    disabled={isProcessing || isMultiMode}
+                    estimatedSize={formatBytes(estimatedSize)}
+                    value={quality}
+                    onChange={setQuality}
+                  />
+                </div>
+                <OptimizationGoal
+                  disabled={isProcessing}
+                  language={language}
+                  maxSizeKb={maxSizeKb}
+                  priority={priority}
+                  onMaxSizeChange={setMaxSizeKb}
+                  onPriorityChange={setPriority}
+                />
+              </div>
+            </section>
+
+            <section className={styles.step}>
+              <div className={styles.stepHeader}>
+                <span className={styles.stepNumber}>4</span>
+                <div>
+                  <h2>{t.edit.stepBackground}</h2>
+                  <p>{t.edit.backgroundHelp}</p>
+                </div>
+              </div>
+              <div className={styles.stepBody}>
+                <div className={styles.lockedFeature}>
+                  <RemoveBackgroundToggle checked={false} disabled onChange={() => undefined} />
+                  <p>{t.edit.removeBackgroundLocked}</p>
+                </div>
+                <BackgroundControls
+                  centerProduct={centerProduct}
+                  color={backgroundColor}
+                  disabled={isProcessing}
+                  language={language}
+                  mode={backgroundMode}
+                  paddingPercent={paddingPercent}
+                  softShadow={softShadow}
+                  onCenterProductChange={setCenterProduct}
+                  onColorChange={setBackgroundColor}
+                  onModeChange={setBackgroundMode}
+                  onPaddingChange={setPaddingPercent}
+                  onSoftShadowChange={setSoftShadow}
+                />
+              </div>
+            </section>
+
+            <details className={styles.secondaryMode}>
+              <summary>
+                <Layers3 size={16} aria-hidden="true" />
+                {t.edit.multiTitle}
+              </summary>
+              <div className={styles.secondaryModeBody}>
+                <p>{t.edit.multiHelp}</p>
+                <div className={styles.modeSwitch} role="group" aria-label={language === "vi" ? "Kiểu xuất ảnh" : "Export mode"}>
+                  <button
+                    className={outputMode === "single" ? styles.activeMode : ""}
+                    disabled={isProcessing}
+                    type="button"
+                    onClick={() => setOutputMode("single")}
+                  >
+                    {language === "vi" ? "Một ảnh" : "Single image"}
+                  </button>
+                  <button
+                    className={outputMode === "multi" ? styles.activeMode : ""}
+                    disabled={isProcessing}
+                    type="button"
+                    onClick={() => setOutputMode("multi")}
+                  >
+                    {language === "vi" ? "Nhiều sàn" : "Multiple platforms"}
+                  </button>
+                </div>
+              </div>
+            </details>
+          </div>
 
           {dimensionsInvalid ? <ErrorAlert message={t.edit.invalidDimensions} /> : null}
-
-          <details className={styles.controlGroup}>
-            <summary>
-              <span>
-                <SlidersHorizontal size={16} aria-hidden="true" />
-                {language === "vi" ? "Nền và bố cục" : "Background and layout"}
-              </span>
-              <strong>{backgroundMode}</strong>
-            </summary>
-            <div className={`${styles.optionBlock} ${styles.featureBlock}`}>
-              <RemoveBackgroundToggle checked={removeBackground} disabled={isProcessing} onChange={setRemoveBackground} />
-            </div>
-            <div className={styles.optionBlock}>
-              <BackgroundControls
-                centerProduct={centerProduct}
-                color={backgroundColor}
-                disabled={isProcessing}
-                language={language}
-                mode={backgroundMode}
-                paddingPercent={paddingPercent}
-                softShadow={softShadow}
-                onCenterProductChange={setCenterProduct}
-                onColorChange={setBackgroundColor}
-                onModeChange={setBackgroundMode}
-                onPaddingChange={setPaddingPercent}
-                onSoftShadowChange={setSoftShadow}
-              />
-            </div>
-          </details>
-
-          {warning ? <ErrorAlert message={warning} /> : null}
+          {processError ? <ErrorAlert message={processError} /> : null}
 
           <div className={styles.actions}>
             <Link className={styles.secondaryAction} to="/">
@@ -335,7 +371,7 @@ export default function EditPage() {
               onClick={handleProcess}
             >
               {isMultiMode ? <Layers3 size={18} aria-hidden="true" /> : <Wand2 size={18} aria-hidden="true" />}
-              {isMultiMode ? (language === "vi" ? "Xuất nhiều nền tảng" : "Export variants") : t.edit.process}
+              {isMultiMode ? (language === "vi" ? "Xuất nhiều sàn" : "Export variants") : t.edit.process}
             </LoadingButton>
           </div>
         </aside>
@@ -348,18 +384,19 @@ function isInvalidDimension(value: number | null): boolean {
   return value !== null && (!Number.isFinite(value) || value <= 0);
 }
 
-function getWarning(format: ImageFormat, removeBackground: boolean, t: ReturnType<typeof useI18n>["t"]): string | null {
-  if (removeBackground && format === "jpg") {
-    return t.edit.jpgTransparency;
+function fullCropRect() {
+  return { x: 0, y: 0, width: 100, height: 100 };
+}
+
+function getDefaultCropRect(sourceWidth: number, sourceHeight: number, targetWidth: number, targetHeight: number) {
+  const sourceRatio = sourceWidth / sourceHeight;
+  const targetRatio = targetWidth / targetHeight;
+
+  if (sourceRatio > targetRatio) {
+    const width = (targetRatio / sourceRatio) * 100;
+    return { x: (100 - width) / 2, y: 0, width, height: 100 };
   }
 
-  if (format === "png") {
-    return t.edit.pngCompression;
-  }
-
-  if (format === "avif") {
-    return t.edit.avifSlow;
-  }
-
-  return null;
+  const height = (sourceRatio / targetRatio) * 100;
+  return { x: 0, y: (100 - height) / 2, width: 100, height };
 }

@@ -1,4 +1,5 @@
 import { ComplianceReport, MultiPlatformExport, ProcessOptions, ProcessedJob, UploadedImage } from "../types";
+import type { ClientProcessResult } from "./clientImageProcessor";
 import { estimateResultSize } from "./estimate";
 import { imageMimeType } from "./format";
 import { platformPresets } from "./presets";
@@ -8,6 +9,7 @@ const jobsKey = "pixpress.jobs";
 const exportsKey = "pixpress.exports";
 
 type StoredImage = Omit<UploadedImage, "file">;
+let activeImageMemory: UploadedImage | null = null;
 
 function createId(prefix: string): string {
   const suffix = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
@@ -47,6 +49,7 @@ export async function createLocalImage(file: File): Promise<UploadedImage> {
   };
 
   sessionStorage.setItem(activeImageKey, JSON.stringify(stripFile(image)));
+  activeImageMemory = image;
   return image;
 }
 
@@ -56,6 +59,10 @@ function stripFile(image: UploadedImage): StoredImage {
 }
 
 export function getActiveImage(): UploadedImage | null {
+  if (activeImageMemory) {
+    return activeImageMemory;
+  }
+
   const raw = sessionStorage.getItem(activeImageKey);
 
   if (!raw) {
@@ -67,6 +74,7 @@ export function getActiveImage(): UploadedImage | null {
 
 export function clearActiveImage(): void {
   sessionStorage.removeItem(activeImageKey);
+  activeImageMemory = null;
 }
 
 export function createJob(image: UploadedImage, options: ProcessOptions): ProcessedJob {
@@ -91,6 +99,37 @@ export function createJob(image: UploadedImage, options: ProcessOptions): Proces
       height,
       previewUrl: image.previewUrl,
       downloadUrl: image.previewUrl,
+    },
+  };
+
+  const jobs = getJobs();
+  jobs[jobId] = job;
+  sessionStorage.setItem(jobsKey, JSON.stringify(jobs));
+  return job;
+}
+
+export function createJobFromClientResult(
+  image: UploadedImage,
+  options: ProcessOptions,
+  result: ClientProcessResult,
+): ProcessedJob {
+  const jobId = createId("job");
+
+  const job: ProcessedJob = {
+    jobId,
+    imageId: image.imageId,
+    status: "completed",
+    original: stripFile(image),
+    options,
+    result: {
+      fileName: result.fileName,
+      format: result.format,
+      mimeType: result.mimeType,
+      size: result.size,
+      width: result.width,
+      height: result.height,
+      previewUrl: result.previewUrl,
+      downloadUrl: result.downloadUrl,
     },
   };
 
@@ -131,6 +170,12 @@ export function createMultiPlatformExport(
           width,
           height,
           fitMode: preset.fitMode,
+        },
+        crop: {
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
         },
         goal: {
           maxSizeKb: preset.maxSizeKb,

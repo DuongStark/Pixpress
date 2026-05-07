@@ -79,8 +79,122 @@
   right: 0;
 }
 
-.modeSwitch {
+.stepList {
+  display: grid;
+}
+
+.step {
   border-bottom: 1px solid var(--color-secondary);
+  display: grid;
+}
+
+.stepHeader {
+  align-items: start;
+  background:
+    linear-gradient(90deg, rgba(26, 109, 175, 0.09), transparent 72%),
+    var(--color-neutral);
+  display: grid;
+  gap: var(--space-sm);
+  grid-template-columns: auto 1fr;
+  padding: 14px 16px;
+}
+
+.stepHeader h2 {
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.stepHeader p {
+  color: var(--color-secondary);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  margin: 4px 0 0;
+}
+
+.stepNumber {
+  align-items: center;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 700;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
+}
+
+.stepBody {
+  display: grid;
+}
+
+.stepBody > * {
+  border-bottom: 1px solid var(--color-secondary);
+}
+
+.stepBody > *:last-child {
+  border-bottom: 0;
+}
+
+.outputGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+}
+
+.outputGrid > *:first-child {
+  border-right: 1px solid var(--color-secondary);
+}
+
+.lockedFeature {
+  border-bottom: 1px solid var(--color-secondary);
+  display: grid;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+}
+
+.lockedFeature p {
+  color: var(--color-secondary);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.secondaryMode {
+  border-bottom: 1px solid var(--color-secondary);
+}
+
+.secondaryMode summary {
+  align-items: center;
+  color: var(--color-secondary);
+  cursor: pointer;
+  display: flex;
+  font-size: 0.76rem;
+  gap: var(--space-sm);
+  list-style: none;
+  padding: 12px 16px;
+  text-transform: uppercase;
+}
+
+.secondaryMode summary::-webkit-details-marker {
+  display: none;
+}
+
+.secondaryModeBody {
+  border-top: 1px solid var(--color-secondary);
+  display: grid;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+}
+
+.secondaryModeBody p {
+  color: var(--color-secondary);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.modeSwitch {
+  border: 1px solid var(--color-secondary);
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -244,17 +358,20 @@
   .actions,
   .modeSwitch,
   .optionGrid,
+  .outputGrid,
   .quickStatus {
     grid-template-columns: 1fr;
   }
 
   .modeSwitch button,
+  .outputGrid > *:first-child,
   .optionGrid .optionBlock:first-child,
   .quickStatus div {
     border-right: 0;
   }
 
   .modeSwitch button,
+  .outputGrid > *:first-child,
   .quickStatus div {
     border-bottom: 1px solid var(--color-secondary);
   }
