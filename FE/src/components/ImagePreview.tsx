@@ -10,10 +10,11 @@ type CropAction = "move" | "nw" | "ne" | "sw" | "se";
 type ImagePreviewProps = {
   image: UploadedImage;
   cropOptions?: Pick<ProcessOptions, "resize" | "crop">;
+  compact?: boolean;
   onCropChange?: (crop: CropRect) => void;
 };
 
-export default function ImagePreview({ image, cropOptions, onCropChange }: ImagePreviewProps) {
+export default function ImagePreview({ image, compact = false, cropOptions, onCropChange }: ImagePreviewProps) {
   const { t } = useI18n();
   const cropBoxRef = useRef<HTMLDivElement | null>(null);
   const dragStart = useRef<{ action: CropAction; x: number; y: number; crop: CropRect } | null>(null);
@@ -27,6 +28,7 @@ export default function ImagePreview({ image, cropOptions, onCropChange }: Image
       }
 
       event.preventDefault();
+      event.stopPropagation();
       event.currentTarget.setPointerCapture(event.pointerId);
       dragStart.current = {
         action,
@@ -67,7 +69,7 @@ export default function ImagePreview({ image, cropOptions, onCropChange }: Image
   }, []);
 
   return (
-    <section className={styles.preview}>
+    <section className={`${styles.preview} ${compact ? styles.compact : ""}`}>
       <div className={styles.previewHeader}>
         <span>{isCropMode ? t.controls.cropPreview : t.controls.originalPreview}</span>
         <span>{formatDimensions(image.width, image.height)}</span>
@@ -86,6 +88,8 @@ export default function ImagePreview({ image, cropOptions, onCropChange }: Image
               <div
                 className={styles.cropSelection}
                 onPointerDown={handlePointerDown("move")}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
                 style={{
                   height: `${cropOptions.crop.height}%`,
                   left: `${cropOptions.crop.x}%`,

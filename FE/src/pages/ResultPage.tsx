@@ -61,7 +61,7 @@ export default function ResultPage() {
         <section className={styles.previewPanel}>
           <div className={styles.previewHeader}>
             <span>{language === "vi" ? "So sánh trước / sau" : "Before / after"}</span>
-            <span>{reachedGoal ? (language === "vi" ? "Ảnh đã sẵn đăng" : "Ready to publish") : language === "vi" ? "Chưa đạt mục tiêu" : "Target missed"}</span>
+            <span>{reachedGoal ? (language === "vi" ? "Ảnh đã sẵn đăng" : "Ready to publish") : language === "vi" ? "Cần giảm dung lượng" : "File size needs adjustment"}</span>
           </div>
           <div className={styles.beforeAfterGrid}>
             <figure className={styles.compareFrame}>

@@ -1,0 +1,96 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: PIXBOARD://IMAGE_PIPELINE
+      - generic [ref=e7]: "SESSION: LOCAL MOCK"
+    - generic [ref=e8]:
+      - link "Pixpress home" [ref=e9] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e10]:
+          - img [ref=e11]
+          - generic [ref=e21]:
+            - generic [ref=e22]: Pixpress
+            - generic [ref=e23]: Image pipeline
+      - navigation "Workflow" [ref=e24]:
+        - generic [ref=e25]: 01 Upload
+        - generic [ref=e26]: 02 Edit
+        - generic [ref=e27]: 03 Result
+      - generic "Language" [ref=e29]:
+        - button "EN" [ref=e30] [cursor=pointer]
+        - button "VI" [ref=e31] [cursor=pointer]
+  - main [ref=e32]:
+    - generic [ref=e33]:
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - text: Step 01 / Input
+          - heading "Turn raw images into ready-to-publish assets" [level=1] [ref=e36]
+          - paragraph [ref=e37]: Upload an image, choose where you want to publish it, and Pixpress will optimize size, format, file weight, and background.
+        - generic "Upload status" [ref=e38]:
+          - generic [ref=e39]:
+            - text: Status
+            - strong [ref=e40]: Waiting
+          - generic [ref=e41]:
+            - text: Limit
+            - strong [ref=e42]: 10MB
+          - generic [ref=e43]:
+            - text: Mode
+            - strong [ref=e44]: Single file
+      - generic [ref=e45]:
+        - generic [ref=e46]:
+          - button "Choose File" [ref=e47]
+          - generic [ref=e48]:
+            - img [ref=e49]
+            - paragraph [ref=e52]: Drop an image here
+            - generic [ref=e53]: Supports JPG, PNG, and WEBP. Max file size 10MB.
+            - button "Choose image" [ref=e54] [cursor=pointer]
+        - complementary [ref=e55]:
+          - generic [ref=e56]:
+            - generic [ref=e57]: Queue / 001
+            - generic [ref=e58]: Idle
+          - generic [ref=e59]:
+            - generic [ref=e60]:
+              - term [ref=e61]: File name
+              - definition [ref=e62]: No file selected
+            - generic [ref=e63]:
+              - term [ref=e64]: Type
+              - definition [ref=e65]: JPG / PNG / WEBP
+            - generic [ref=e66]:
+              - term [ref=e67]: Size
+              - definition [ref=e68]: 0 B
+            - generic [ref=e69]:
+              - term [ref=e70]: Dimensions
+              - definition [ref=e71]: 0 x 0px
+          - generic "Accepted formats" [ref=e72]:
+            - generic [ref=e73]: JPG
+            - generic [ref=e74]: PNG
+            - generic [ref=e75]: WEBP
+      - button "Continue optimizing" [disabled] [ref=e77]:
+        - text: Continue optimizing
+        - img [ref=e78]
+      - region "Prepare product, social, and website images faster" [ref=e80]:
+        - generic [ref=e81]:
+          - text: Everyday image workflow
+          - heading "Prepare product, social, and website images faster" [level=2] [ref=e82]
+          - paragraph [ref=e83]: Pixpress starts from the publishing target, then fills practical defaults for size, format, target weight, and background.
+        - generic [ref=e84]:
+          - article [ref=e85]:
+            - heading "Compress images" [level=3] [ref=e86]
+            - paragraph [ref=e87]: Reduce file size for photos, screenshots, banners, and uploads while keeping previews clean.
+          - article [ref=e88]:
+            - heading "Convert to WEBP" [level=3] [ref=e89]
+            - paragraph [ref=e90]: Prepare modern image files for websites, blogs, online stores, portfolios, and landing pages.
+          - article [ref=e91]:
+            - heading "Resize for any requirement" [level=3] [ref=e92]
+            - paragraph [ref=e93]: Set width and height values when a platform, form, profile, shop, or layout needs exact dimensions.
+      - region "FAQ" [ref=e94]:
+        - generic [ref=e96]: FAQ
+        - generic [ref=e97]:
+          - article [ref=e98]:
+            - heading "Is Pixpress free?" [level=3] [ref=e99]
+            - paragraph [ref=e100]: Yes. The current tool is free to use, with no login and no watermark.
+          - article [ref=e101]:
+            - heading "Which image formats are supported?" [level=3] [ref=e102]
+            - paragraph [ref=e103]: Pixpress accepts JPG, PNG, and WEBP files up to 10MB in the current MVP.
+          - article [ref=e104]:
+            - heading "What can I use Pixpress for?" [level=3] [ref=e105]
+            - paragraph [ref=e106]: Use it for websites, product photos, social posts, profile images, documents, portfolios, and everyday image uploads.

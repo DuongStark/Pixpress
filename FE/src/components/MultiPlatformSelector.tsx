@@ -38,11 +38,11 @@ export default function MultiPlatformSelector({
       <div className={styles.header}>
         <Layers3 size={18} aria-hidden="true" />
         <div>
-          <h2 id="platform-export-title">{language === "vi" ? "Xuất cho nhiều sàn" : "Multi-platform export"}</h2>
+          <h2 id="platform-export-title">{language === "vi" ? "Tạo ảnh cho nhiều sàn" : "Create images for multiple platforms"}</h2>
           <p>
             {language === "vi"
-              ? "Chọn các nền tảng cần đăng. Pixpress sẽ tạo file riêng theo preset từng nền tảng."
-              : "Choose platforms. Pixpress creates a separate output for each preset."}
+              ? "Chọn các sàn cần đăng. Pixpress sẽ tạo một file riêng cho từng sàn."
+              : "Choose where you want to publish. Pixpress creates a separate file for each platform."}
           </p>
         </div>
       </div>

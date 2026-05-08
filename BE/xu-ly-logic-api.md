@@ -1,276 +1,113 @@
-# Phần 2: Tài liệu xử lý logic và API BE
+# Pixpress Backend API Docs
 
-Tài liệu này mô tả backend cho Pixpress theo hướng **ảnh sẵn đăng**. BE không chỉ nhận ảnh rồi nén. BE phải biết preset, mục tiêu dung lượng, resize, format, nền, xóa nền, kiểm tra kết quả đạt yêu cầu và trả về lý do nếu chưa đạt.
+Tài liệu này mô tả API backend cho Pixpress theo cơ chế **hybrid client-first**:
 
-## 1. Vai trò của backend
+- Máy người dùng đủ khỏe: FE xử lý ảnh ngay trên client, không upload ảnh lên BE.
+- Máy yếu, browser thiếu capability, ảnh quá nặng, hoặc xử lý local lỗi: FE gửi ảnh lên BE để xử lý fallback bằng Sharp.
+- MVP không upload ảnh gốc lên R2, không lưu file lâu dài, không tạo job async.
+- MVP có hỗ trợ xóa nền bằng API ngoài. Với tác vụ có `removeBackground = true`, FE luôn gửi ảnh lên BE, BE gọi Re-imaged rồi xử lý tiếp bằng Sharp.
 
-Backend cần đảm nhiệm các việc sau:
+## 1. Backend Làm Gì
 
-- Nhận upload ảnh.
-- Validate file thật sự là ảnh đọc được.
-- Đọc metadata ảnh gốc.
-- Lưu file gốc tạm thời.
-- Quản lý preset chuẩn ở server.
-- Nhận yêu cầu xử lý theo preset hoặc tùy chỉnh.
-- Resolve preset thành options cụ thể.
-- Resize, crop, pad, convert format, nén ảnh bằng Sharp.
-- Tối ưu lặp để cố đạt `targetMaxBytes`.
-- Gọi dịch vụ xóa nền nếu cần.
-- Ghép nền mới: trong suốt, trắng, màu tùy chọn, bóng nhẹ sau MVP.
-- Đánh giá kết quả có đạt mục tiêu hay không.
-- Trả preview và download.
-- Xóa file hết hạn.
+Backend trong MVP có 4 nhiệm vụ chính:
 
-BE nên là nơi giữ logic chuẩn để tránh FE tự hard-code luật xử lý ảnh. FE có thể hiển thị preset, nhưng BE phải validate và resolve lại.
+1. Cung cấp preset chuẩn cho FE.
+2. Validate request và options khi FE cần fallback.
+3. Gọi Re-imaged để xóa nền khi user bật `removeBackground`.
+4. Xử lý ảnh fallback bằng Sharp rồi trả file kết quả trực tiếp.
 
-## 2. Công nghệ đề xuất
+Backend chưa làm trong MVP:
 
-- Node.js + Express.
-- Multer để nhận multipart upload.
-- Sharp để xử lý ảnh.
-- Zod hoặc Joi để validate request body.
-- nanoid hoặc uuid để tạo id.
-- remove.bg API cho xóa nền MVP.
-- Local filesystem cho MVP.
-- S3/R2 sau khi cần scale.
-- BullMQ/Redis sau MVP nếu xử lý batch hoặc job async dài.
+- Không lưu ảnh gốc lên R2.
+- Không lưu ảnh gốc vào local storage bền.
+- Không tạo history.
+- Không tạo account.
+- Không tạo job async.
+- Không tạo download URL lâu dài.
+- Không batch.
 
-## 3. Cấu trúc thư mục đề xuất
+Backend có gọi service ngoài trong MVP:
 
-```txt
-src/
-  app.js
-  server.js
-  config/
-    env.js
-    presets.js
-  routes/
-    health.routes.js
-    image.routes.js
-    preset.routes.js
-  controllers/
-    image.controller.js
-    preset.controller.js
-  services/
-    upload.service.js
-    image.service.js
-    processing.service.js
-    preset.service.js
-    compression.service.js
-    background.service.js
-    storage.service.js
-    job.service.js
-  validators/
-    upload.validator.js
-    process.validator.js
-    preset.validator.js
-  middlewares/
-    upload.middleware.js
-    error.middleware.js
-    rate-limit.middleware.js
-  utils/
-    file.util.js
-    image.util.js
-    mime.util.js
-```
+- Re-imaged `POST /api/remove_background` cho xóa nền.
+- BE không expose API key cho FE.
+- BE không lưu response Re-imaged ra disk, chỉ giữ trong memory trong thời gian xử lý request.
+- Nếu Re-imaged lỗi, BE trả lỗi để FE hiển thị user retry hoặc tắt xóa nền.
 
-Thư mục lưu file MVP:
+## 2. Base URL
+
+Local development:
 
 ```txt
-storage/
-  uploads/
-  results/
-  temp/
+http://localhost:3001/api
 ```
 
-## 4. Khái niệm chính
-
-### 4.1 Image
-
-Đại diện ảnh gốc user upload.
-
-```json
-{
-  "imageId": "img_123",
-  "originalName": "product.png",
-  "mimeType": "image/png",
-  "format": "png",
-  "size": 2489000,
-  "width": 3024,
-  "height": 3024,
-  "path": "storage/uploads/img_123/original.png",
-  "createdAt": "2026-05-06T10:00:00.000Z",
-  "expiresAt": "2026-05-06T11:00:00.000Z"
-}
-```
-
-### 4.2 Preset
-
-Preset mô tả nơi đăng và rule xử lý mặc định.
-
-```json
-{
-  "presetId": "shopee-product-square",
-  "name": "Shopee ảnh sản phẩm",
-  "group": "ecommerce",
-  "description": "Ảnh sản phẩm vuông, nền trắng, nhẹ dung lượng.",
-  "output": {
-    "format": "jpg",
-    "width": 1024,
-    "height": 1024,
-    "fit": "contain",
-    "background": {
-      "mode": "solid",
-      "color": "#FFFFFF"
-    },
-    "paddingPercent": 8,
-    "quality": 82,
-    "targetMaxBytes": 512000
-  },
-  "removeBackgroundDefault": false,
-  "priority": "balanced"
-}
-```
-
-### 4.3 ProcessOptions
-
-Options cuối cùng sau khi resolve preset và override từ user.
-
-```json
-{
-  "presetId": "shopee-product-square",
-  "format": "webp",
-  "quality": 80,
-  "targetMaxBytes": 512000,
-  "priority": "balanced",
-  "resize": {
-    "width": 1024,
-    "height": 1024,
-    "fit": "contain",
-    "keepAspectRatio": true,
-    "withoutEnlargement": true,
-    "paddingPercent": 8
-  },
-  "background": {
-    "remove": true,
-    "mode": "solid",
-    "color": "#FFFFFF",
-    "shadow": false
-  }
-}
-```
-
-### 4.4 Job
-
-Đại diện một lần xử lý ảnh.
-
-```json
-{
-  "jobId": "job_456",
-  "imageId": "img_123",
-  "status": "completed",
-  "presetId": "shopee-product-square",
-  "options": {},
-  "goal": {
-    "targetMaxBytes": 512000,
-    "passed": true,
-    "reason": null
-  },
-  "original": {
-    "fileName": "product.png",
-    "size": 2489000,
-    "width": 3024,
-    "height": 3024,
-    "format": "png"
-  },
-  "result": {
-    "fileName": "product-pixpress.webp",
-    "mimeType": "image/webp",
-    "format": "webp",
-    "size": 438000,
-    "width": 1024,
-    "height": 1024,
-    "path": "storage/results/job_456/product-pixpress.webp",
-    "previewUrl": "/api/images/jobs/job_456/preview",
-    "downloadUrl": "/api/images/jobs/job_456/download"
-  },
-  "createdAt": "2026-05-06T10:01:00.000Z",
-  "expiresAt": "2026-05-06T11:01:00.000Z"
-}
-```
-
-## 5. Preset MVP đề xuất
-
-BE nên có preset hard-code trong `config/presets.js` ở MVP. Sau này chuyển DB.
-
-### 5.1 Shopee ảnh sản phẩm
-
-- `presetId`: `shopee-product-square`
-- Size: 1024x1024.
-- Fit: `contain`.
-- Padding: 8%.
-- Background: trắng.
-- Format: JPG hoặc WEBP.
-- Target: 500KB.
-- Priority: balanced.
-
-### 5.2 Website WebP
-
-- `presetId`: `website-webp`
-- Width tối đa: 1600.
-- Height tự theo tỷ lệ.
-- Format: WEBP.
-- Target: 300KB-800KB tùy ảnh.
-- Không đổi nền mặc định.
-
-### 5.3 Blog thumbnail
-
-- `presetId`: `blog-thumbnail`
-- Size: 1200x630.
-- Fit: `cover`.
-- Format: WEBP.
-- Target: 350KB.
-
-### 5.4 Avatar
-
-- `presetId`: `avatar-square`
-- Size: 512x512.
-- Fit: `cover`.
-- Format: JPG hoặc WEBP.
-- Target: 200KB.
-
-### 5.5 Tự chỉnh
-
-- `presetId`: `custom`
-- Không ép size.
-- User tự chọn format, quality, target.
-
-## 6. API cần code
-
-Base path đề xuất:
+FE dev server proxy:
 
 ```txt
 /api
 ```
 
-### 6.1 Health check
+## 3. Response Format Chung
+
+Các API trả JSON dùng format:
+
+```json
+{
+  "success": true,
+  "data": {}
+}
+```
+
+Lỗi dùng format:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR",
+    "message": "Human readable error message."
+  }
+}
+```
+
+Riêng `POST /api/images/process` khi thành công trả binary image, không trả JSON.
+
+## 4. Health API
+
+### `GET /api/health`
+
+Kiểm tra backend còn sống.
+
+Request:
 
 ```http
 GET /api/health
 ```
 
-Response:
+Response `200`:
 
 ```json
 {
   "success": true,
-  "status": "ok"
+  "status": "ok",
+  "timestamp": "2026-05-08T00:00:00.000Z"
 }
 ```
 
-### 6.2 Lấy danh sách preset
+FE dùng API này để:
 
-FE cần API này để hiển thị preset và không hard-code quá nhiều.
+- Kiểm tra backend available trước khi fallback.
+- Hiển thị lỗi mềm nếu server fallback không sẵn sàng.
+
+## 5. Preset APIs
+
+Preset là rule chuẩn cho từng nơi đăng ảnh. BE là nguồn chuẩn, FE có thể cache nhưng không nên tự quyết rule chính.
+
+### `GET /api/presets`
+
+Lấy danh sách preset.
+
+Request:
 
 ```http
 GET /api/presets
@@ -278,11 +115,17 @@ GET /api/presets
 
 Query optional:
 
-```txt
-group=ecommerce|social|website|personal
+| Query | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `group` | string | no | `ecommerce`, `social`, `website`, `personal` |
+
+Ví dụ:
+
+```http
+GET /api/presets?group=ecommerce
 ```
 
-Response:
+Response `200`:
 
 ```json
 {
@@ -290,123 +133,401 @@ Response:
   "data": [
     {
       "presetId": "shopee-product-square",
-      "name": "Shopee ảnh sản phẩm",
+      "name": "Shopee - Ảnh sản phẩm",
       "group": "ecommerce",
-      "description": "Ảnh sản phẩm vuông, nền trắng, nhẹ dung lượng.",
-      "defaults": {
-        "format": "jpg",
+      "description": "Ảnh sản phẩm cho Shopee - 1:1, nền trắng, 1024x1024px",
+      "platform": "shopee",
+      "output": {
+        "format": "png",
         "width": 1024,
         "height": 1024,
         "fit": "contain",
-        "targetMaxBytes": 512000,
-        "backgroundMode": "solid",
-        "backgroundColor": "#FFFFFF",
-        "paddingPercent": 8
-      }
+        "background": {
+          "mode": "solid",
+          "color": "#FFFFFF"
+        },
+        "paddingPercent": 8,
+        "quality": 82,
+        "targetMaxBytes": 512000
+      },
+      "constraints": {
+        "minWidth": 500,
+        "maxWidth": 2000,
+        "minHeight": 500,
+        "maxHeight": 2000,
+        "maxTargetBytes": 2097152,
+        "allowedFormats": ["jpg", "png"],
+        "productFillPercent": 70
+      },
+      "removeBackgroundDefault": false,
+      "priority": "balanced"
     }
   ]
 }
 ```
 
-### 6.3 Lấy chi tiết preset
+Validation:
 
-```http
-GET /api/presets/:presetId
-```
+- Nếu `group` rỗng hoặc không truyền: trả toàn bộ preset.
+- Nếu `group` không thuộc danh sách hỗ trợ: trả `400`.
 
-Response:
+Error `400`:
 
 ```json
 {
-  "success": true,
-  "data": {
-    "presetId": "website-webp",
-    "name": "Website WebP",
-    "group": "website",
-    "defaults": {},
-    "constraints": {
-      "allowedFormats": ["webp", "avif", "jpg"],
-      "maxWidth": 2400,
-      "maxHeight": 2400,
-      "maxTargetBytes": 5242880
-    }
+  "success": false,
+  "error": {
+    "code": "ERROR",
+    "message": "Unsupported preset group."
   }
 }
 ```
 
-### 6.4 Upload ảnh
+FE dùng API này để:
 
-```http
-POST /api/images/upload
-```
+- Render preset selector.
+- Lấy default options cho client-side processing.
+- Lấy cùng preset để gửi lên server fallback khi cần.
+
+## 6. Image Processing APIs
+
+### `POST /api/images/process`
+
+Server xử lý một ảnh khi FE cần fallback hoặc khi tác vụ bắt buộc chạy backend.
+
+API này được gọi trong 2 trường hợp:
+
+1. Máy/browser không đủ điều kiện client-side, hoặc client-side xử lý fail.
+2. User bật `removeBackground`. Case này luôn chạy backend vì BE phải gọi Re-imaged.
 
 Request:
 
-```txt
+```http
+POST /api/images/process
 Content-Type: multipart/form-data
-file: image
+```
+
+Form fields:
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `file` | File | yes | JPG, PNG, WEBP |
+| `options` | JSON string | no | Process options từ FE |
+
+Ví dụ `options`:
+
+```json
+{
+  "format": "webp",
+  "quality": 82,
+  "resize": {
+    "width": 1024,
+    "height": 1024,
+    "fit": "contain"
+  },
+  "goal": {
+    "maxSizeKb": 500,
+    "priority": "balanced"
+  },
+  "background": {
+    "mode": "white",
+    "color": "#FFFFFF",
+    "paddingPercent": 8,
+    "centerProduct": true,
+    "softShadow": false
+  },
+  "removeBackground": true,
+  "preset": {
+    "id": "shopee-product-square",
+    "name": "Shopee - Ảnh sản phẩm"
+  }
+}
+```
+
+MVP xử lý các fields sau:
+
+| Field | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `format` | string | input format hoặc `webp` | `jpg`, `jpeg`, `png`, `webp`, `avif` |
+| `quality` | number | `82` | Clamp về 1-100 |
+| `resize.width` | number | original width | Số nguyên dương nếu truyền |
+| `resize.height` | number | original height | Số nguyên dương nếu truyền |
+| `resize.fit` | string | `inside` | `contain`, `cover`, `inside`; `pad` map sang `contain` |
+| `removeBackground` | boolean | `false` | Nếu `true`, BE gọi Re-imaged trước khi xử lý Sharp |
+
+Thứ tự xử lý MVP:
+
+```txt
+Nếu removeBackground = true:
+1. BE nhận ảnh gốc từ FE.
+2. BE gửi ảnh gốc dạng base64 lên Re-imaged.
+3. Re-imaged trả PNG có alpha.
+4. BE dùng PNG này làm input cho Sharp.
+5. BE crop/resize/convert/compress theo options.
+6. BE trả binary image cuối cùng về FE.
+
+Nếu removeBackground = false:
+1. BE dùng ảnh user upload làm input cho Sharp.
+2. BE crop/resize/convert/compress theo options.
+3. BE trả binary image cuối cùng về FE.
+```
+
+Không crop/nén mạnh trên client trước khi gọi xóa nền, vì làm mất detail ở viền subject và có thể làm AI cắt xấu hơn. Ngoại lệ duy nhất: nếu ảnh quá lớn, BE có thể downscale nhẹ trước khi gọi Re-imaged để giảm payload, nhưng không nên JPEG-compress mạnh.
+
+MVP nhận nhưng chưa xử lý thật các fields sau:
+
+| Field | Notes |
+| --- | --- |
+| `goal.maxSizeKb` | Chưa có compression loop để đảm bảo target |
+| `goal.priority` | Chưa dùng để chọn quality min |
+| `background.mode` | Chưa compose nền nâng cao |
+| `background.paddingPercent` | Chưa tạo canvas/padding nâng cao |
+| `background.softShadow` | Chưa hỗ trợ |
+| `preset` | Chưa resolve lại preset trong endpoint này |
+
+Response thành công `200`:
+
+```http
+Content-Type: image/webp
+Content-Disposition: attachment; filename="product-pixpress.webp"
+X-Pixpress-File-Name: product-pixpress.webp
+X-Pixpress-Format: webp
+X-Pixpress-Size: 438000
+X-Pixpress-Width: 1024
+X-Pixpress-Height: 1024
+```
+
+Body là binary image.
+
+FE xử lý response như sau:
+
+1. Đọc body thành `Blob`.
+2. Tạo object URL bằng `URL.createObjectURL(blob)`.
+3. Đọc metadata từ response headers.
+4. Dùng object URL làm preview/download URL.
+
+Ví dụ FE pseudo-code:
+
+```ts
+const formData = new FormData();
+formData.append("file", file);
+formData.append("options", JSON.stringify(options));
+
+const response = await fetch("/api/images/process", {
+  method: "POST",
+  body: formData,
+});
+
+if (!response.ok) {
+  throw await parseApiError(response);
+}
+
+const blob = await response.blob();
+const result = {
+  fileName: response.headers.get("X-Pixpress-File-Name") ?? "image-pixpress.webp",
+  format: response.headers.get("X-Pixpress-Format") ?? options.format,
+  size: Number(response.headers.get("X-Pixpress-Size") ?? blob.size),
+  width: Number(response.headers.get("X-Pixpress-Width")),
+  height: Number(response.headers.get("X-Pixpress-Height")),
+  previewUrl: URL.createObjectURL(blob),
+};
 ```
 
 Validation:
 
-- Bắt buộc có file.
-- Chỉ nhận `image/jpeg`, `image/png`, `image/webp`.
-- Dung lượng tối đa 10MB cho MVP.
-- File phải đọc được bằng Sharp.
-- Không dùng `originalName` để tạo path thật.
+- `file` bắt buộc.
+- `file.mimetype` phải thuộc `image/jpeg`, `image/png`, `image/webp`.
+- `file.size <= MAX_UPLOAD_BYTES`.
+- Sharp phải đọc được metadata.
+- `format` phải thuộc `jpg`, `jpeg`, `png`, `webp`, `avif`.
+- `quality` nếu truyền sẽ clamp 1-100.
+- `resize.width` và `resize.height` nếu truyền phải là số nguyên dương.
+- `resize.fit` phải thuộc `contain`, `cover`, `inside`, `pad`.
 
-Response thành công:
+Error examples:
+
+Không có file:
 
 ```json
 {
-  "success": true,
-  "data": {
-    "imageId": "img_123",
-    "originalName": "product.png",
-    "mimeType": "image/png",
-    "format": "png",
-    "size": 2489000,
-    "width": 3024,
-    "height": 3024,
-    "previewUrl": "/api/images/img_123/preview",
-    "expiresAt": "2026-05-06T11:00:00.000Z"
+  "success": false,
+  "error": {
+    "code": "ERROR",
+    "message": "No file uploaded."
   }
 }
 ```
 
-### 6.5 Preview ảnh gốc
+Sai định dạng:
 
-```http
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR",
+    "message": "Unsupported file type: image/gif"
+  }
+}
+```
+
+Options JSON lỗi:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR",
+    "message": "Invalid options JSON."
+  }
+}
+```
+
+Format output không hỗ trợ:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR",
+    "message": "Unsupported output format."
+  }
+}
+```
+
+## 7. Hybrid Decision Contract
+
+FE quyết định local hay server trước khi process.
+
+Decision input:
+
+```ts
+type ClientProcessDecisionInput = {
+  file: File;
+  image: {
+    width: number;
+    height: number;
+    mimeType: string;
+  };
+  options: ProcessOptions;
+};
+```
+
+Rule MVP:
+
+```txt
+Use client-side when:
+- file.size <= 10MB
+- width * height <= 20MP
+- output format is supported in browser
+- navigator.deviceMemory is missing or >= 4
+- removeBackground is false
+
+Use server fallback when:
+- removeBackground is true
+- any condition above fails
+- client-side processing throws
+- user manually chooses server fallback later
+```
+
+Luồng ví dụ user chọn crop + compress + remove background:
+
+```txt
+FE
+-> Không crop/nén trước.
+-> POST /api/images/process với file gốc và options đầy đủ.
+
+BE
+-> Gọi Re-imaged remove_background bằng ảnh gốc.
+-> Nhận PNG transparent.
+-> Apply crop/resize/format/quality bằng Sharp.
+-> Trả ảnh cuối về FE.
+```
+
+Luồng ví dụ user chỉ chọn crop + compress:
+
+```txt
+FE
+-> Nếu máy đủ khỏe: xử lý bằng canvas/browser API, không upload file lên BE.
+-> Nếu máy yếu hoặc lỗi: POST /api/images/process để BE xử lý bằng Sharp.
+```
+
+FE pseudo-code:
+
+```ts
+async function processImage(file, image, options) {
+  if (options.removeBackground) {
+    return processOnServer(file, options);
+  }
+
+  if (shouldUseClientProcessing(file, image, options)) {
+    try {
+      return await processOnClient(file, options);
+    } catch {
+      return processOnServer(file, options);
+    }
+  }
+
+  return processOnServer(file, options);
+}
+```
+
+## 8. API Loại Khỏi MVP
+
+### `POST /api/images/upload`
+
+Không dùng trong MVP.
+
+Lý do:
+
+- Client khỏe không cần upload.
+- Server fallback nhận file trực tiếp trong `/api/images/process`.
+- Upload raw file lên R2 trước khi biết có cần server hay không làm chậm flow và tăng cost.
+
+### Job APIs
+
+Chưa làm trong MVP:
+
+```txt
 GET /api/images/:imageId/preview
+GET /api/images/jobs/:jobId
+GET /api/images/jobs/:jobId/preview
+GET /api/images/jobs/:jobId/download
+DELETE /api/images/jobs/:jobId
 ```
 
-Response:
+Chỉ thêm lại khi có job storage thật.
 
-- Trả file ảnh gốc hoặc preview đã giới hạn kích thước.
-- Header `Content-Type` đúng theo ảnh.
-- Có cache ngắn nếu cần.
+### Export APIs
 
-### 6.6 Resolve preset trước khi xử lý
+Chưa làm trong MVP:
 
-API này giúp FE preview options cuối cùng khi user chọn preset + override.
-
-```http
-POST /api/images/resolve-options
+```txt
+POST /api/images/export-platforms
+GET /api/exports/:exportId
+GET /api/exports/:exportId/download.zip
+GET /api/exports/:exportId/variants/:variantId/download
 ```
+
+Chỉ thêm sau khi single-image pipeline ổn.
+
+## 9. API Nên Thêm Sau MVP
+
+### `POST /api/images/resolve-options`
+
+Mục đích: BE resolve preset + overrides thành options cuối cùng để FE preview trước khi process.
 
 Request:
 
 ```json
 {
-  "imageId": "img_123",
   "presetId": "shopee-product-square",
   "overrides": {
     "format": "webp",
-    "targetMaxBytes": 512000,
-    "background": {
-      "remove": true,
-      "mode": "solid",
-      "color": "#FFFFFF"
+    "quality": 80,
+    "resize": {
+      "width": 1024,
+      "height": 1024,
+      "fit": "contain"
     }
   }
 }
@@ -427,16 +548,12 @@ Response:
       "resize": {
         "width": 1024,
         "height": 1024,
-        "fit": "contain",
-        "keepAspectRatio": true,
-        "withoutEnlargement": true,
-        "paddingPercent": 8
+        "fit": "contain"
       },
       "background": {
-        "remove": true,
         "mode": "solid",
         "color": "#FFFFFF",
-        "shadow": false
+        "paddingPercent": 8
       }
     },
     "warnings": []
@@ -444,80 +561,17 @@ Response:
 }
 ```
 
-Warnings ví dụ:
+### `POST /api/images/process-json`
 
-```json
-[
-  {
-    "code": "JPG_NO_TRANSPARENCY",
-    "message": "JPG không hỗ trợ nền trong suốt. Hãy dùng PNG hoặc WEBP."
-  }
-]
-```
+Chỉ cần nếu sau MVP muốn lưu result lên R2 hoặc object storage rồi trả JSON.
 
-### 6.7 Xử lý ảnh
-
-```http
-POST /api/images/process
-```
-
-Request:
-
-```json
-{
-  "imageId": "img_123",
-  "presetId": "shopee-product-square",
-  "overrides": {
-    "format": "webp",
-    "quality": 80,
-    "targetMaxBytes": 512000,
-    "priority": "balanced",
-    "resize": {
-      "width": 1024,
-      "height": 1024,
-      "fit": "contain",
-      "paddingPercent": 8
-    },
-    "background": {
-      "remove": true,
-      "mode": "solid",
-      "color": "#FFFFFF",
-      "shadow": false
-    }
-  }
-}
-```
-
-Validation:
-
-- `imageId` tồn tại và chưa hết hạn.
-- `presetId` tồn tại, hoặc là `custom`.
-- `format` thuộc `jpg`, `png`, `webp`, `avif`.
-- `quality` từ 1 đến 100.
-- `targetMaxBytes` nếu có phải lớn hơn 10KB và nhỏ hơn giới hạn hệ thống.
-- Width/height nếu có phải lớn hơn 0.
-- Width/height không vượt giới hạn xử lý, ví dụ 8000px.
-- `fit` thuộc `contain`, `cover`, `inside`.
-- `paddingPercent` từ 0 đến 30.
-- `background.color` phải là mã màu hợp lệ nếu mode là `solid`.
-
-Response thành công:
+Response dạng đó:
 
 ```json
 {
   "success": true,
   "data": {
-    "jobId": "job_456",
-    "imageId": "img_123",
-    "status": "completed",
-    "presetId": "shopee-product-square",
-    "goal": {
-      "targetMaxBytes": 512000,
-      "passed": true,
-      "actualBytes": 438000,
-      "reason": null,
-      "suggestions": []
-    },
+    "jobId": "job_123",
     "result": {
       "fileName": "product-pixpress.webp",
       "format": "webp",
@@ -525,792 +579,72 @@ Response thành công:
       "size": 438000,
       "width": 1024,
       "height": 1024,
-      "previewUrl": "/api/images/jobs/job_456/preview",
-      "downloadUrl": "/api/images/jobs/job_456/download"
+      "downloadUrl": "https://cdn.example.com/results/job_123.webp"
     }
   }
 }
 ```
 
-Response khi xử lý xong nhưng chưa đạt mục tiêu:
+Không thêm API này nếu chưa cần URL sống lâu.
 
-```json
-{
-  "success": true,
-  "data": {
-    "jobId": "job_789",
-    "status": "completed",
-    "goal": {
-      "targetMaxBytes": 300000,
-      "passed": false,
-      "actualBytes": 412000,
-      "reason": "TARGET_SIZE_NOT_REACHED",
-      "suggestions": [
-        "Giảm kích thước ảnh xuống 900px.",
-        "Chọn ưu tiên Nhẹ nhất.",
-        "Đổi sang WEBP hoặc AVIF nếu nền tảng hỗ trợ."
-      ]
-    },
-    "result": {
-      "fileName": "product-pixpress.webp",
-      "format": "webp",
-      "size": 412000,
-      "width": 1024,
-      "height": 1024,
-      "previewUrl": "/api/images/jobs/job_789/preview",
-      "downloadUrl": "/api/images/jobs/job_789/download"
-    }
-  }
-}
-```
-
-Lưu ý: chưa đạt target không nên là HTTP error nếu ảnh vẫn xử lý thành công. Đây là trạng thái sản phẩm, không phải lỗi server.
-
-### 6.8 Lấy thông tin job
-
-```http
-GET /api/images/jobs/:jobId
-```
-
-Response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "jobId": "job_456",
-    "imageId": "img_123",
-    "status": "completed",
-    "presetId": "shopee-product-square",
-    "goal": {
-      "targetMaxBytes": 512000,
-      "passed": true,
-      "actualBytes": 438000
-    },
-    "original": {
-      "fileName": "product.png",
-      "format": "png",
-      "mimeType": "image/png",
-      "size": 2489000,
-      "width": 3024,
-      "height": 3024
-    },
-    "result": {
-      "fileName": "product-pixpress.webp",
-      "format": "webp",
-      "mimeType": "image/webp",
-      "size": 438000,
-      "width": 1024,
-      "height": 1024,
-      "previewUrl": "/api/images/jobs/job_456/preview",
-      "downloadUrl": "/api/images/jobs/job_456/download"
-    }
-  }
-}
-```
-
-### 6.9 Preview kết quả
-
-```http
-GET /api/images/jobs/:jobId/preview
-```
-
-Response:
-
-- Trả ảnh kết quả.
-- Nếu file hết hạn, trả lỗi `JOB_EXPIRED`.
-
-### 6.10 Download kết quả
-
-```http
-GET /api/images/jobs/:jobId/download
-```
-
-Response:
-
-```http
-Content-Type: image/webp
-Content-Disposition: attachment; filename="product-pixpress.webp"
-```
-
-### 6.11 Lịch sử xử lý local
-
-Optional sau MVP nếu chưa có tài khoản.
-
-```http
-GET /api/images/history
-```
-
-Response:
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "jobId": "job_456",
-      "presetId": "shopee-product-square",
-      "fileName": "product-pixpress.webp",
-      "createdAt": "2026-05-06T10:01:00.000Z",
-      "originalSize": 2489000,
-      "resultSize": 438000,
-      "goalPassed": true,
-      "downloadUrl": "/api/images/jobs/job_456/download"
-    }
-  ]
-}
-```
-
-### 6.12 Xóa job và file
-
-```http
-DELETE /api/images/jobs/:jobId
-```
-
-Response:
-
-```json
-{
-  "success": true
-}
-```
-
-## 7. Pipeline xử lý ảnh
-
-### 7.1 Pipeline tổng quát
-
-```txt
-Nhận request
--> Validate imageId, presetId, overrides
--> Lấy metadata ảnh gốc
--> Resolve preset + overrides thành ProcessOptions
--> Chuẩn bị input buffer
--> Xóa nền nếu background.remove = true
--> Resize/crop/pad theo fit mode
--> Ghép nền nếu cần
--> Convert format
--> Nén theo quality ban đầu
--> Nếu có targetMaxBytes, chạy compression loop
--> Ghi file kết quả
--> Đọc metadata kết quả
--> Đánh giá goal passed/failed
--> Lưu job
--> Trả response
-```
-
-### 7.2 Resolve preset
-
-Thứ tự ưu tiên:
-
-```txt
-System default
--> Preset default
--> User overrides
--> Backend validation/safety clamp
-```
-
-Ví dụ:
-
-- Preset Shopee đặt size 1024x1024.
-- User đổi format sang WEBP.
-- BE giữ size preset, đổi format theo user.
-- Nếu user đặt target 5KB, BE clamp hoặc trả validation error vì quá thấp.
-
-### 7.3 Fit mode
-
-`contain`:
-
-- Giữ toàn bộ ảnh.
-- Nếu output có width/height cố định, phần trống được fill bằng background.
-- Hợp ảnh sản phẩm.
-
-`cover`:
-
-- Crop để lấp đầy khung.
-- Hợp thumbnail social/blog.
-
-`inside`:
-
-- Resize để ảnh nằm trong max width/height.
-- Không thêm canvas.
-- Hợp ảnh website.
-
-### 7.4 Xóa nền
-
-Pipeline:
-
-```txt
-Input file
--> Gửi remove.bg hoặc service tương đương
--> Nhận PNG/WebP có alpha
--> Lưu temp
--> Đưa temp vào Sharp pipeline
--> Xóa temp sau khi xong
-```
-
-Quy tắc:
-
-- Timeout riêng, ví dụ 30 giây.
-- Nếu xóa nền fail, trả `BACKGROUND_REMOVE_FAILED`.
-- Nếu format output là JPG và background mode là transparent, phải cảnh báo hoặc tự đổi background trắng.
-- Không gọi remove.bg nếu user không bật xóa nền.
-
-### 7.5 Ghép nền
-
-Mode đề xuất:
-
-```txt
-original      Giữ nền gốc
-transparent  Giữ alpha
-solid         Đổ nền màu
-```
-
-Với `solid`:
-
-- Tạo canvas màu.
-- Composite ảnh lên canvas.
-- Nếu có padding, resize ảnh vào vùng nhỏ hơn canvas.
-
-### 7.6 Compression loop để đạt target
-
-Nếu request có `targetMaxBytes`, BE không nên nén một lần rồi thôi. Cần thử nhiều mức quality.
-
-Thuật toán MVP:
-
-```txt
-qualityStart = user quality hoặc preset quality
-qualityMin theo priority
-qualityStep = 5
-
-render ở qualityStart
-nếu size <= target -> đạt
-nếu chưa đạt:
-  giảm quality mỗi vòng
-  render lại
-  dừng khi đạt hoặc quality <= qualityMin
-
-nếu vẫn chưa đạt:
-  trả ảnh tốt nhất đã tạo
-  goal.passed = false
-  suggestions = đề xuất giảm size / đổi format / chọn ưu tiên nhẹ hơn
-```
-
-Quality min theo priority:
-
-```txt
-lightest: 45
-balanced: 60
-best: 75
-```
-
-Sau MVP có thể dùng binary search thay vì giảm tuyến tính.
-
-### 7.7 Khi target quá thấp
-
-Không nên cố nén đến mức ảnh hỏng.
-
-Ví dụ:
-
-- Ảnh 1024x1024 target 20KB gần như không hợp lý.
-- BE nên trả validation warning hoặc xử lý xong nhưng `goal.passed = false`.
-
-Gợi ý response:
-
-```json
-{
-  "code": "TARGET_TOO_AGGRESSIVE",
-  "message": "Mục tiêu dung lượng quá thấp so với kích thước ảnh."
-}
-```
-
-## 8. Service responsibilities
-
-### preset.service.js
-
-Nhiệm vụ:
-
-- Trả danh sách preset.
-- Trả chi tiết preset.
-- Resolve preset + overrides.
-- Validate preset theo constraints.
-
-Hàm đề xuất:
-
-```txt
-listPresets(group)
-getPresetById(presetId)
-resolveProcessOptions(image, presetId, overrides)
-validateResolvedOptions(options)
-```
-
-### upload.service.js
-
-Nhiệm vụ:
-
-- Nhận file từ Multer.
-- Validate MIME.
-- Đọc metadata bằng Sharp.
-- Lưu file upload.
-- Tạo Image record.
-
-Hàm đề xuất:
-
-```txt
-createImageFromUpload(file)
-getImageById(imageId)
-getOriginalPreview(imageId)
-```
-
-### processing.service.js
-
-Nhiệm vụ:
-
-- Điều phối toàn bộ pipeline xử lý.
-- Gọi background service nếu cần.
-- Gọi compression service.
-- Ghi result và tạo job.
-
-Hàm đề xuất:
-
-```txt
-processImage(imageId, presetId, overrides)
-buildSharpPipeline(input, options)
-composeBackground(input, options)
-writeResult(jobId, buffer, options)
-```
-
-### compression.service.js
-
-Nhiệm vụ:
-
-- Convert format.
-- Apply quality.
-- Thử nhiều quality để đạt target dung lượng.
-- Trả kết quả tốt nhất.
-
-Hàm đề xuất:
-
-```txt
-renderWithFormat(buffer, options, quality)
-optimizeToTarget(buffer, options, targetMaxBytes, priority)
-getQualityBounds(priority)
-```
-
-### background.service.js
-
-Nhiệm vụ:
-
-- Gọi API xóa nền.
-- Quản lý timeout.
-- Chuẩn hóa lỗi xóa nền.
-
-Hàm đề xuất:
-
-```txt
-removeBackground(inputPath)
-```
-
-### storage.service.js
-
-Nhiệm vụ:
-
-- Lưu upload.
-- Lưu result.
-- Lưu temp.
-- Lấy path an toàn.
-- Xóa file hết hạn.
-
-Hàm đề xuất:
-
-```txt
-saveUpload(file, imageId)
-saveResult(jobId, fileName, buffer)
-saveTemp(buffer, extension)
-getUploadPath(imageId)
-getResultPath(jobId)
-deleteJobFiles(jobId)
-cleanupExpiredFiles()
-```
-
-### job.service.js
-
-Nhiệm vụ:
-
-- Tạo job.
-- Lấy job.
-- Cập nhật status.
-- Tính goal result.
-
-Hàm đề xuất:
-
-```txt
-createJob(data)
-getJobById(jobId)
-completeJob(jobId, result)
-failJob(jobId, error)
-evaluateGoal(result, options)
-```
-
-## 9. Error response chuẩn
-
-Tất cả API lỗi nên trả cùng format:
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Dữ liệu không hợp lệ.",
-    "details": []
-  }
-}
-```
-
-Mã lỗi đề xuất:
-
-```txt
-VALIDATION_ERROR
-FILE_REQUIRED
-FILE_TOO_LARGE
-UNSUPPORTED_FILE_TYPE
-IMAGE_READ_FAILED
-IMAGE_NOT_FOUND
-IMAGE_EXPIRED
-PRESET_NOT_FOUND
-UNSUPPORTED_FORMAT
-INVALID_TARGET_SIZE
-INVALID_RESIZE_OPTIONS
-BACKGROUND_REMOVE_FAILED
-IMAGE_PROCESS_FAILED
-JOB_NOT_FOUND
-JOB_EXPIRED
-DOWNLOAD_FILE_NOT_FOUND
-RATE_LIMITED
-INTERNAL_ERROR
-```
-
-## 10. Bảo mật và giới hạn
-
-Cần có:
-
-- Giới hạn dung lượng upload.
-- Validate MIME bằng cả file header/metadata, không chỉ tin `file.mimetype`.
-- Không dùng tên file gốc để tạo path.
-- Không expose path thật.
-- Giới hạn pixel tối đa để tránh ảnh quá lớn gây tốn RAM.
-- Giới hạn số vòng compression loop.
-- Timeout khi xử lý Sharp.
-- Timeout khi gọi remove.bg.
-- Xóa temp file trong `finally`.
-- Rate limit upload/process nếu public internet.
-- TTL cho upload/result.
-
-Giới hạn MVP đề xuất:
-
-```txt
-MAX_FILE_SIZE_MB=10
-MAX_IMAGE_PIXELS=40000000
-MAX_OUTPUT_WIDTH=4000
-MAX_OUTPUT_HEIGHT=4000
-MAX_COMPRESSION_ATTEMPTS=10
-FILE_TTL_MINUTES=60
-REMOVE_BG_TIMEOUT_MS=30000
-```
-
-## 11. Biến môi trường
+## 10. Environment Variables
 
 ```env
-PORT=3000
+PORT=3001
 NODE_ENV=development
-
-MAX_FILE_SIZE_MB=10
-MAX_IMAGE_PIXELS=40000000
-MAX_OUTPUT_WIDTH=4000
-MAX_OUTPUT_HEIGHT=4000
-MAX_COMPRESSION_ATTEMPTS=10
-
-UPLOAD_DIR=storage/uploads
-RESULT_DIR=storage/results
-TEMP_DIR=storage/temp
-FILE_TTL_MINUTES=60
-
-REMOVE_BG_API_KEY=
-REMOVE_BG_TIMEOUT_MS=30000
+API_PREFIX=/api
+MAX_UPLOAD_BYTES=10485760
+REIMAGED_API_KEY=
 ```
 
-## 12. Thứ tự code BE đề xuất
+Notes:
 
-1. Tạo Express app, health check, error middleware.
-2. Tạo upload middleware bằng Multer.
-3. Code `POST /api/images/upload`.
-4. Code storage local và image record in-memory hoặc JSON file cho MVP.
-5. Code `GET /api/images/:imageId/preview`.
-6. Tạo preset config và `GET /api/presets`.
-7. Code preset resolver.
-8. Code `POST /api/images/resolve-options`.
-9. Code Sharp pipeline cơ bản: resize + format + quality.
-10. Code `POST /api/images/process`.
-11. Code result preview/download.
-12. Code compression loop theo `targetMaxBytes`.
-13. Code background solid/padding cho ảnh sản phẩm.
-14. Tích hợp xóa nền.
-15. Thêm cleanup file hết hạn.
-16. Thêm batch sau MVP.
+- `REIMAGED_API_KEY` chỉ nằm ở BE.
+- Không đưa key này vào FE env.
+- Khi deploy, set key bằng secret/env của hosting provider.
 
-## 13. Tiêu chí hoàn thành BE MVP
+MVP không cần:
 
-- Upload ảnh hợp lệ thành công.
-- Từ chối file sai định dạng.
-- Từ chối file quá lớn.
-- Đọc metadata ảnh gốc.
-- Trả preview ảnh gốc.
-- Trả danh sách preset.
-- Resolve preset + override đúng.
-- Resize được theo `contain`, `cover`, `inside`.
-- Convert được JPG, PNG, WEBP, AVIF.
-- Nén theo quality.
-- Cố đạt target dung lượng bằng compression loop.
-- Trả `goal.passed = true/false`.
-- Trả suggestions khi chưa đạt.
-- Ghép nền trắng cho ảnh sản phẩm.
-- Download được file kết quả.
-- Xóa temp file sau xử lý.
-- Lỗi API có format chuẩn.
+```env
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET_NAME=
+R2_PUBLIC_URL=
+```
 
-## 14. Cập nhật ưu tiên: Sharp pipeline thật
+## 11. Implementation Priority
 
-MVP backend phải ưu tiên xử lý ảnh thật bằng Sharp trước khi thêm tính năng "wow". FE hiện có thể mô phỏng flow, nhưng BE cần tạo file kết quả thật để user tải xuống.
+Thứ tự code hợp lý:
 
-Phạm vi bắt buộc:
+1. Giữ `GET /api/health`.
+2. Giữ `GET /api/presets`.
+3. Hoàn thiện `POST /api/images/process` fallback.
+4. Thêm Re-imaged integration cho `removeBackground = true`.
+5. FE dùng preset từ BE.
+6. FE làm client-side processing thật cho tác vụ không xóa nền.
+7. FE thêm decision layer local/server.
+8. Thêm compression loop cho target size.
+9. Thêm background composer.
+10. Thêm compliance checker.
+11. Sau đó mới tính R2, job async, multi-platform, batch.
 
-- Upload ảnh thật qua `POST /api/images/upload`.
-- Đọc metadata thật: width, height, MIME, format, byte size.
-- Validate file bằng Sharp, không chỉ tin `file.mimetype`.
-- Resize theo preset hoặc override.
-- Convert format: JPG, PNG, WEBP, AVIF nếu Sharp runtime hỗ trợ ổn định.
-- Nén theo quality.
-- Chạy compression loop để cố đạt `targetMaxBytes`.
-- Lưu result thật vào `storage/results`.
-- Trả preview/download URL thật.
-- Download file kết quả qua `GET /api/images/jobs/:jobId/download`.
+## 12. R2 Khi Nào Quay Lại
 
-Không dùng estimate size làm kết quả cuối cùng ở BE. Estimate chỉ được dùng ở FE trước khi xử lý để gợi ý.
+Chỉ thêm R2 khi có nhu cầu rõ:
 
-Pipeline tối thiểu:
+- User cần link tải sống sau request.
+- Có account/history.
+- Batch async cần ZIP.
+- Job xử lý lâu cần queue.
+- Muốn share result qua URL public.
+
+Khi thêm lại, ưu tiên lưu **result**, không upload raw file như bước bắt buộc:
 
 ```txt
-upload
--> Sharp metadata
--> resolve preset + overrides
--> resize/crop/pad
--> compose background nếu cần
--> encode format + quality
--> optimize to target size
--> write result file
--> evaluate goal
--> return job
+FE fallback
+-> POST /api/images/process-json
+-> BE process Sharp
+-> BE upload result lên R2
+-> BE trả JSON downloadUrl
 ```
-
-Response `job.result.size`, `job.result.width`, `job.result.height`, `job.result.format` phải lấy từ file đã render, không lấy từ request.
-
-## 15. Compliance Checker MVP
-
-Compliance checker nên làm sớm, nhưng chỉ check rule chắc. Mục tiêu là giúp user biết vì sao ảnh có thể chưa sẵn sàng đăng, không hứa chắc được sàn duyệt 100%.
-
-Rule chắc nên check:
-
-- Kích thước đầu ra: đúng width/height preset hoặc trong khoảng preset cho phép.
-- Tỉ lệ ảnh: ví dụ 1:1, 4:5, 9:16.
-- Dung lượng: `actualBytes <= targetMaxBytes`.
-- Format: nằm trong danh sách format preset cho phép.
-- Nền: kiểm tra theo option xử lý, ví dụ `background.mode = solid` và `background.color = #FFFFFF` cho preset cần nền trắng.
-- Trạng thái goal: `goal.passed = true/false`.
-
-Rule chỉ nên warning ở MVP:
-
-- Text/watermark trong ảnh.
-- Product coverage.
-- Product bị lệch tâm.
-- Nền có sạch tuyệt đối hay không.
-
-Lý do: các rule này cần computer vision hoặc OCR. Nếu detect sai, user mất niềm tin. MVP chỉ nên hiển thị là "cần kiểm tra thủ công" hoặc "Pixpress chưa xác nhận chắc".
-
-Data model đề xuất:
-
-```json
-{
-  "compliance": {
-    "presetId": "shopee-product-square",
-    "status": "passed",
-    "checks": [
-      {
-        "code": "DIMENSIONS",
-        "level": "pass",
-        "label": "Kích thước",
-        "message": "1024x1024 đúng preset."
-      },
-      {
-        "code": "FILE_SIZE",
-        "level": "pass",
-        "label": "Dung lượng",
-        "message": "438KB dưới mục tiêu 500KB."
-      }
-    ],
-    "warnings": [
-      {
-        "code": "TEXT_WATERMARK_UNVERIFIED",
-        "label": "Text/watermark",
-        "message": "Pixpress chưa kiểm tra chắc text hoặc watermark trong MVP."
-      }
-    ]
-  }
-}
-```
-
-`status` nên có:
-
-```txt
-passed
-needs_review
-failed
-```
-
-Nếu rule chắc fail, status là `failed`. Nếu rule chắc pass nhưng còn warning chưa xác minh, status là `needs_review`. Nếu tất cả rule chắc pass và không có warning bắt buộc, status là `passed`.
-
-## 16. Multi-Platform Export
-
-Multi-platform export là tính năng nên làm sau khi single-image pipeline và compliance checker ổn định, trước batch. Đây là flow: một ảnh gốc, user chọn nhiều nền tảng, BE xuất nhiều file phù hợp rule từng nền tảng.
-
-Ví dụ:
-
-```txt
-1 ảnh gốc
--> Chọn Shopee + Lazada + TikTok Shop
--> BE resolve 3 preset
--> Render 3 output riêng
--> Check compliance từng output
--> Trả ZIP có thư mục theo nền tảng
-```
-
-Nguyên tắc:
-
-- Mỗi nền tảng dùng preset riêng ở BE, không để FE tự hard-code rule.
-- Mỗi output có `jobId` hoặc `variantId` riêng.
-- Mỗi output có result metadata riêng: size, width, height, format, goal, compliance.
-- Nếu một nền tảng fail, các nền tảng còn lại vẫn được trả về nếu xử lý thành công.
-- Download ZIP là lựa chọn chính; download từng file vẫn nên hỗ trợ.
-
-API đề xuất:
-
-```http
-POST /api/images/export-platforms
-GET /api/exports/:exportId
-GET /api/exports/:exportId/download.zip
-GET /api/exports/:exportId/variants/:variantId/download
-```
-
-Request:
-
-```json
-{
-  "imageId": "img_123",
-  "platformPresetIds": [
-    "shopee-product-square",
-    "lazada-product-square",
-    "tiktok-shop-product-square"
-  ],
-  "sharedOverrides": {
-    "background": {
-      "remove": true,
-      "mode": "solid",
-      "color": "#FFFFFF"
-    }
-  }
-}
-```
-
-Response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "exportId": "export_123",
-    "status": "completed",
-    "variants": [
-      {
-        "variantId": "variant_shopee",
-        "presetId": "shopee-product-square",
-        "platform": "Shopee",
-        "status": "completed",
-        "result": {
-          "fileName": "product-shopee.webp",
-          "format": "webp",
-          "size": 438000,
-          "width": 1024,
-          "height": 1024,
-          "downloadUrl": "/api/exports/export_123/variants/variant_shopee/download"
-        },
-        "goal": {
-          "passed": true
-        },
-        "compliance": {
-          "status": "needs_review"
-        }
-      }
-    ],
-    "zipDownloadUrl": "/api/exports/export_123/download.zip"
-  }
-}
-```
-
-ZIP structure:
-
-```txt
-pixpress-export.zip
-├── shopee/
-│   └── product-shopee.webp
-├── lazada/
-│   └── product-lazada.jpg
-└── tiktok-shop/
-    └── product-tiktok-shop.webp
-```
-
-MVP của multi-platform export chỉ cần nhóm ecommerce: Shopee, Lazada, TikTok Shop. Social/website có thể thêm sau vì intent khác.
-
-## 17. Batch + Template sau single-image
-
-Batch là tính năng quan trọng cho seller, nhưng chỉ nên làm sau khi single-image pipeline chạy ổn định. Không đưa batch vào MVP nếu upload/process/download một ảnh chưa thật sự chắc.
-
-Phạm vi batch phiên bản đầu:
-
-- Upload 20-50 ảnh/lần.
-- Chọn một preset/template áp dụng cho toàn bộ batch.
-- Lưu template từ options của single-image flow.
-- Xử lý từng ảnh bằng cùng Sharp pipeline.
-- Có progress từng ảnh.
-- Cho retry từng ảnh lỗi.
-- Cho tải từng ảnh hoặc tải ZIP.
-
-API đề xuất sau MVP:
-
-```http
-POST /api/batches
-POST /api/batches/:batchId/images
-POST /api/batches/:batchId/process
-GET /api/batches/:batchId
-GET /api/batches/:batchId/download.zip
-POST /api/templates
-GET /api/templates
-```
-
-Giới hạn MVP batch:
-
-```txt
-MAX_BATCH_IMAGES=50
-MAX_BATCH_FILE_SIZE_MB=10
-MAX_BATCH_TOTAL_SIZE_MB=300
-MAX_PARALLEL_PROCESS=2
-```
-
-Khi batch chạy, BE nên dùng queue hoặc worker nhẹ. Nếu chưa dùng Redis/BullMQ, có thể xử lý tuần tự trong process với status in-memory cho bản prototype, nhưng cần ghi rõ hạn chế.

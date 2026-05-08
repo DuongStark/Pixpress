@@ -1,10 +1,9 @@
-module.exports = {
-  presets: [
+export const presets = [
     {
       presetId: "tiktok-shop-product",
-      name: "TikTok Shop - Ảnh sản phẩm",
+      name: "TikTok Shop",
       group: "ecommerce",
-      description: "Ảnh sản phẩm cho TikTok Shop - 1:1, nền trắng, 1200x1200px",
+      description: "Ảnh vuông cho TikTok Shop, nền trắng, 1200x1200px",
       platform: "tiktok-shop",
       output: {
         format: "png",
@@ -33,9 +32,9 @@ module.exports = {
     },
     {
       presetId: "shopee-product-square",
-      name: "Shopee - Ảnh sản phẩm",
+      name: "Shopee",
       group: "ecommerce",
-      description: "Ảnh sản phẩm cho Shopee - 1:1, nền trắng, 1024x1024px",
+      description: "Ảnh vuông cho Shopee, nền trắng, 1024x1024px",
       platform: "shopee",
       output: {
         format: "png",
@@ -64,9 +63,9 @@ module.exports = {
     },
     {
       presetId: "lazada-product-square",
-      name: "Lazada - Ảnh sản phẩm",
+      name: "Lazada",
       group: "ecommerce",
-      description: "Ảnh sản phẩm cho Lazada - 1:1, nền trắng, 1200x1200px",
+      description: "Ảnh vuông cho Lazada, nền trắng, 1200x1200px",
       platform: "lazada",
       output: {
         format: "png",
@@ -95,9 +94,9 @@ module.exports = {
     },
     {
       presetId: "website-webp",
-      name: "Website - Ảnh WebP",
+      name: "Website WebP",
       group: "website",
-      description: "Ảnh tối ưu cho website - WebP, nén nhẹ",
+      description: "Ảnh WebP tối ưu cho website, dung lượng nhẹ",
       output: {
         format: "webp",
         width: 1600,
@@ -120,9 +119,9 @@ module.exports = {
     },
     {
       presetId: "blog-thumbnail",
-      name: "Blog - Thumbnail",
+      name: "Thumbnail bài viết",
       group: "website",
-      description: "Thumbnail cho bài blog - 1200x630, cover",
+      description: "Ảnh đại diện bài viết, 1200x630px",
       output: {
         format: "webp",
         width: 1200,
@@ -147,7 +146,7 @@ module.exports = {
       presetId: "avatar-square",
       name: "Avatar",
       group: "personal",
-      description: "Ảnh đại diện - 512x512, vuông",
+      description: "Ảnh đại diện vuông, 512x512px",
       output: {
         format: "jpg",
         width: 512,
@@ -171,9 +170,9 @@ module.exports = {
     },
     {
       presetId: "social-instagram",
-      name: "Instagram - Ảnh bài viết",
+      name: "Instagram",
       group: "social",
-      description: "Ảnh cho bài viết Instagram - 1080x1080",
+      description: "Ảnh vuông cho bài đăng Instagram, 1080x1080px",
       output: {
         format: "jpg",
         width: 1080,
@@ -199,9 +198,9 @@ module.exports = {
     },
     {
       presetId: "facebook-marketplace",
-      name: "Facebook Marketplace - Ảnh sản phẩm",
+      name: "Facebook Marketplace",
       group: "ecommerce",
-      description: "Ảnh sản phẩm cho Facebook Marketplace - 1:1, nền trắng",
+      description: "Ảnh vuông cho Facebook Marketplace, nền trắng",
       platform: "facebook-marketplace",
       output: {
         format: "png",
@@ -230,9 +229,9 @@ module.exports = {
     },
     {
       presetId: "youtube-thumbnail",
-      name: "YouTube - Thumbnail",
+      name: "YouTube thumbnail",
       group: "social",
-      description: "Thumbnail cho video YouTube - 1280x720, 16:9",
+      description: "Ảnh thumbnail YouTube, 1280x720px, tỷ lệ 16:9",
       platform: "youtube",
       output: {
         format: "jpg",
@@ -260,7 +259,7 @@ module.exports = {
       presetId: "custom",
       name: "Tùy chỉnh",
       group: "personal",
-      description: "Tùy chỉnh kích thước, format, chất lượng theo nhu cầu",
+      description: "Tự chọn kích thước, định dạng và chất lượng theo nhu cầu",
       output: {
         format: "jpg",
         width: null,
@@ -281,12 +280,4 @@ module.exports = {
       removeBackgroundDefault: false,
       priority: "balanced"
     }
-  ],
-
-  groups: [
-    { id: "ecommerce", name: "Thương mại điện tử" },
-    { id: "social", name: "Mạng xã hội" },
-    { id: "website", name: "Website" },
-    { id: "personal", name: "Cá nhân" }
-  ]
-};
+  ];

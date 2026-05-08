@@ -86,6 +86,7 @@ export type ExportVariant = {
   presetId: string;
   status: "completed";
   result: ProcessedJob["result"];
+  options: ProcessOptions;
   goalPassed: boolean;
   compliance: ComplianceReport;
 };

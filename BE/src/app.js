@@ -2,6 +2,8 @@ import express from "express";
 import env from "./config/env.js";
 import healthRoutes from "./routes/health.routes.js";
 import presetRoutes from "./routes/preset.routes.js";
+import imageRoutes from "./routes/image.routes.js";
+
 import { defaultRateLimit } from "./middlewares/rate-limit.middleware.js";
 import { notFoundHandler, errorHandler } from "./middlewares/error.middleware.js";
 
@@ -22,6 +24,7 @@ app.get("/", (req, res) => {
 
 app.use(`${env.apiPrefix}/health`, healthRoutes);
 app.use(`${env.apiPrefix}/presets`, presetRoutes);
+app.use(`${env.apiPrefix}/images`, imageRoutes)
 
 app.use(notFoundHandler);
 app.use(errorHandler);

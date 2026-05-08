@@ -1,4 +1,4 @@
-class HttpError extends Error {
+export class HttpError extends Error {
   constructor(statusCode, message, details) {
     super(message);
     this.name = "HttpError";
@@ -7,11 +7,11 @@ class HttpError extends Error {
   }
 }
 
-function notFoundHandler(req, res, next) {
+export function notFoundHandler(req, res, next) {
   next(new HttpError(404, `Route not found: ${req.method} ${req.originalUrl}`));
 }
 
-function errorHandler(err, req, res, next) {
+export function errorHandler(err, req, res, next) {
   if (res.headersSent) {
     return next(err);
   }
@@ -48,9 +48,3 @@ function errorHandler(err, req, res, next) {
 
   return res.status(statusCode).json(payload);
 }
-
-module.exports = {
-  HttpError,
-  notFoundHandler,
-  errorHandler,
-};

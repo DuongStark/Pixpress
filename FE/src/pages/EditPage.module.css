@@ -159,74 +159,196 @@
   margin: 0;
 }
 
-.secondaryMode {
-  border-bottom: 1px solid var(--color-secondary);
-}
-
-.secondaryMode summary {
-  align-items: center;
-  color: var(--color-secondary);
-  cursor: pointer;
-  display: flex;
-  font-size: 0.76rem;
-  gap: var(--space-sm);
-  list-style: none;
-  padding: 12px 16px;
-  text-transform: uppercase;
-}
-
-.secondaryMode summary::-webkit-details-marker {
-  display: none;
-}
-
-.secondaryModeBody {
-  border-top: 1px solid var(--color-secondary);
-  display: grid;
-  gap: var(--space-sm);
-  padding: var(--space-md);
-}
-
-.secondaryModeBody p {
-  color: var(--color-secondary);
-  font-size: 0.78rem;
-  line-height: 1.45;
-  margin: 0;
-}
-
-.modeSwitch {
+.modeTabs {
   border: 1px solid var(--color-secondary);
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: var(--space-md);
 }
 
-.modeSwitch button {
+.modeTab {
   align-items: center;
   background: transparent;
   border: 0;
   border-right: 1px solid var(--color-secondary);
-  color: var(--color-primary);
+  color: var(--color-secondary);
   cursor: pointer;
   display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 600;
   gap: var(--space-sm);
   justify-content: center;
-  min-height: 42px;
-  padding: 0 12px;
+  letter-spacing: 0.04em;
+  min-height: 46px;
+  padding: 0 16px;
   text-transform: uppercase;
+  transition: background var(--motion-fast), color var(--motion-fast);
 }
 
-.modeSwitch button:last-child {
+.modeTab:last-child {
   border-right: 0;
 }
 
-.modeSwitch button:hover,
-.activeMode {
-  background: var(--color-tertiary) !important;
+.modeTab:hover {
+  background: var(--color-neutral);
+  color: var(--color-primary);
+}
+
+.modeTabActive {
+  background: var(--color-primary) !important;
   color: var(--color-on-primary) !important;
 }
 
-.modeSwitch button:disabled {
+.platformDesc {
+  border-bottom: 1px solid var(--color-secondary);
+  padding: var(--space-md);
+}
+
+.platformDesc p {
+  color: var(--color-secondary);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.platformGrid {
+  display: grid;
+  gap: 1px;
+  background: var(--color-secondary);
+  border-bottom: 1px solid var(--color-secondary);
+}
+
+.platformCard {
+  align-items: flex-start;
+  background: var(--color-surface);
+  border: 0;
+  cursor: pointer;
+  display: grid;
+  column-gap: 10px;
+  grid-template-areas:
+    "check name"
+    "check spec"
+    "check bg";
+  grid-template-columns: 18px minmax(0, 1fr);
+  row-gap: 2px;
+  padding: 14px 16px;
+  position: relative;
+  text-align: left;
+  transition: background var(--motion-fast);
+}
+
+.platformCard:hover {
+  background: var(--color-neutral);
+}
+
+.platformCard:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+.platformCardActive {
+  background: var(--color-neutral) !important;
+  box-shadow: inset 0 0 0 1px var(--color-primary);
+}
+
+.platformCardActive .platformCardCheck {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.platformCardActive .platformCardName {
+  color: var(--color-primary);
+}
+
+.platformCardActive .platformCardSpec {
+  color: var(--color-secondary);
+}
+
+.platformCardActive .platformCardBg {
+  color: var(--color-secondary);
+}
+
+.platformCardCheck {
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-secondary);
+  color: transparent;
+  display: inline-flex;
+  font-size: 0.7rem;
+  font-weight: 700;
+  grid-area: check;
+  height: 16px;
+  justify-content: center;
+  margin-top: 2px;
+  position: relative;
+  width: 16px;
+}
+
+.platformCardActive .platformCardCheck::after {
+  border-bottom: 2px solid var(--color-on-primary);
+  border-left: 2px solid var(--color-on-primary);
+  content: "";
+  height: 4px;
+  transform: rotate(-45deg) translate(1px, -1px);
+  width: 8px;
+}
+
+.platformCardName {
+  color: var(--color-primary);
+  font-size: 0.88rem;
+  grid-area: name;
+}
+
+.platformCardSpec {
+  color: var(--color-secondary);
+  font-size: 0.75rem;
+  grid-area: spec;
+  margin-top: 2px;
+}
+
+.platformCardBg {
+  color: var(--color-secondary);
+  font-size: 0.72rem;
+  grid-area: bg;
+  opacity: 0.8;
+}
+
+.comingSoonNote {
+  align-items: center;
+  border-bottom: 1px solid var(--color-secondary);
+  display: flex;
+  gap: var(--space-sm);
+  opacity: 0.7;
+  padding: 10px 16px;
+}
+
+.comingSoonBadge {
+  background: var(--color-neutral);
+  border: 1px solid var(--color-secondary);
+  color: var(--color-secondary);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.comingSoonNote > span:last-child {
+  color: var(--color-secondary);
+  font-size: 0.76rem;
+}
+
+.previewNote {
+  align-items: center;
+  background: var(--color-neutral);
+  border: 1px solid var(--color-secondary);
+  color: var(--color-secondary);
+  display: flex;
+  font-size: 0.76rem;
+  gap: var(--space-sm);
+  padding: 10px 14px;
 }
 
 .optionBlock {

@@ -1,4 +1,5 @@
 import { ComplianceReport, MultiPlatformExport, ProcessOptions, ProcessedJob, UploadedImage } from "../types";
+import { processImageOnClient } from "./clientImageProcessor";
 import type { ClientProcessResult } from "./clientImageProcessor";
 import { estimateResultSize } from "./estimate";
 import { imageMimeType } from "./format";
@@ -148,17 +149,17 @@ function getJobs(): Record<string, ProcessedJob> {
   return raw ? (JSON.parse(raw) as Record<string, ProcessedJob>) : {};
 }
 
-export function createMultiPlatformExport(
+export async function createMultiPlatformExport(
   image: UploadedImage,
   presetIds: string[],
   baseOptions: ProcessOptions,
-): MultiPlatformExport {
+): Promise<MultiPlatformExport> {
   const exportId = createId("export");
   const baseName = image.originalName.replace(/\.[^.]+$/, "") || "image";
-  const variants = presetIds
+  const variants = await Promise.all(presetIds
     .map((presetId) => platformPresets.find((preset) => preset.id === presetId))
     .filter((preset): preset is NonNullable<typeof preset> => Boolean(preset))
-    .map((preset) => {
+    .map(async (preset) => {
       const width = preset.width || image.width;
       const height = preset.height || image.height;
       const options: ProcessOptions = {
@@ -169,14 +170,9 @@ export function createMultiPlatformExport(
           ...baseOptions.resize,
           width,
           height,
-          fitMode: preset.fitMode,
+          fitMode: "cover",
         },
-        crop: {
-          x: 0,
-          y: 0,
-          width: 100,
-          height: 100,
-        },
+        crop: getDefaultCropRect(image.width, image.height, width, height),
         goal: {
           maxSizeKb: preset.maxSizeKb,
           priority: preset.priority,
@@ -191,9 +187,10 @@ export function createMultiPlatformExport(
           name: preset.name.vi,
         },
       };
-      const size = estimateResultSize(image, options, width, height);
-      const goalPassed = size <= preset.maxSizeKb * 1024;
+      const result = await processImageOnClient(image, options);
+      const goalPassed = result.size <= preset.maxSizeKb * 1024;
       const platform = preset.name.vi.replace(" ảnh sản phẩm", "").replace(" product photo", "");
+      const fileName = `${baseName}-${preset.id.replace("-product", "").replace("-square", "")}.${preset.format}`;
 
       return {
         variantId: createId("variant"),
@@ -201,19 +198,20 @@ export function createMultiPlatformExport(
         presetId: preset.id,
         status: "completed" as const,
         result: {
-          fileName: `${baseName}-${preset.id.replace("-product", "").replace("-square", "")}.${preset.format}`,
-          format: preset.format,
-          mimeType: imageMimeType(preset.format),
-          size,
-          width,
-          height,
-          previewUrl: image.previewUrl,
-          downloadUrl: image.previewUrl,
+          fileName,
+          format: result.format,
+          mimeType: result.mimeType || imageMimeType(preset.format),
+          size: result.size,
+          width: result.width,
+          height: result.height,
+          previewUrl: result.previewUrl,
+          downloadUrl: result.downloadUrl,
         },
+        options,
         goalPassed,
-        compliance: createCompliance(goalPassed, width, height, preset.maxSizeKb, preset.format.toUpperCase()),
+        compliance: createCompliance(goalPassed, result.width, result.height, preset.maxSizeKb, result.format.toUpperCase()),
       };
-    });
+    }));
 
   const exportJob: MultiPlatformExport = {
     exportId,
@@ -221,7 +219,7 @@ export function createMultiPlatformExport(
     status: "completed",
     original: stripFile(image),
     variants,
-    zipDownloadUrl: image.previewUrl,
+    zipDownloadUrl: variants[0]?.result.downloadUrl ?? image.previewUrl,
   };
 
   const exports = getExports();
@@ -232,6 +230,12 @@ export function createMultiPlatformExport(
 
 export function getExport(exportId: string): MultiPlatformExport | null {
   return getExports()[exportId] ?? null;
+}
+
+export function saveExport(exportJob: MultiPlatformExport): void {
+  const exports = getExports();
+  exports[exportJob.exportId] = exportJob;
+  sessionStorage.setItem(exportsKey, JSON.stringify(exports));
 }
 
 function getExports(): Record<string, MultiPlatformExport> {
@@ -276,9 +280,22 @@ function createCompliance(
       {
         code: "MANUAL_REVIEW",
         level: "warning",
-        label: "Text / sản phẩm",
-        message: "Cần kiểm tra thủ công ở MVP.",
+        label: "Nội dung ảnh",
+        message: "Hãy kiểm tra sản phẩm, chữ và logo trước khi đăng.",
       },
     ],
   };
+}
+
+function getDefaultCropRect(sourceWidth: number, sourceHeight: number, targetWidth: number, targetHeight: number): ProcessOptions["crop"] {
+  const sourceRatio = sourceWidth / sourceHeight;
+  const targetRatio = targetWidth / targetHeight;
+
+  if (sourceRatio > targetRatio) {
+    const width = (targetRatio / sourceRatio) * 100;
+    return { x: (100 - width) / 2, y: 0, width, height: 100 };
+  }
+
+  const height = (sourceRatio / targetRatio) * 100;
+  return { x: 0, y: (100 - height) / 2, width: 100, height };
 }

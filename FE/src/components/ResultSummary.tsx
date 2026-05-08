@@ -28,11 +28,11 @@ export default function ResultSummary({ job }: ResultSummaryProps) {
     <section className={styles.summary}>
       <h2>{t.result.details}</h2>
       <div className={`${styles.statusCard} ${reachedGoal ? styles.success : styles.warning}`}>
-        <strong>{reachedGoal ? (language === "vi" ? "Ảnh đã sẵn đăng" : "Ready to publish") : language === "vi" ? "Chưa đạt mục tiêu" : "Target not reached"}</strong>
+        <strong>{reachedGoal ? (language === "vi" ? "Ảnh đã sẵn đăng" : "Ready to publish") : language === "vi" ? "Cần giảm dung lượng" : "File size needs adjustment"}</strong>
         <span>
           {reachedGoal
-            ? `${language === "vi" ? "Đạt" : "Hit"}: ${formatBytes(job.result.size)} / ${goal.maxSizeKb}KB`
-            : `${language === "vi" ? "Chưa đạt" : "Missed"}: ${formatBytes(job.result.size)} / ${goal.maxSizeKb}KB`}
+            ? `${language === "vi" ? "Đạt yêu cầu" : "Meets requirement"}: ${formatBytes(job.result.size)} / ${goal.maxSizeKb}KB`
+            : `${language === "vi" ? "Vượt giới hạn" : "Over limit"}: ${formatBytes(job.result.size)} / ${goal.maxSizeKb}KB`}
         </span>
       </div>
       <dl>
@@ -84,7 +84,7 @@ export default function ResultSummary({ job }: ResultSummaryProps) {
         </div>
       </dl>
       <section className={styles.compliance}>
-        <h3>{language === "vi" ? "Kiểm tra rule kỹ thuật" : "Technical checks"}</h3>
+        <h3>{language === "vi" ? "Kiểm tra yêu cầu cơ bản" : "Basic requirements check"}</h3>
         <ul>
           <li className={styles.pass}>
             <span>{language === "vi" ? "Kích thước" : "Dimensions"}</span>
@@ -96,11 +96,11 @@ export default function ResultSummary({ job }: ResultSummaryProps) {
           </li>
           <li className={reachedGoal ? styles.pass : styles.fail}>
             <span>{language === "vi" ? "Dung lượng" : "File size"}</span>
-            <strong>{reachedGoal ? language === "vi" ? "Đạt mục tiêu" : "Target hit" : language === "vi" ? "Chưa đạt" : "Missed"}</strong>
+            <strong>{reachedGoal ? language === "vi" ? "Đạt yêu cầu" : "Meets requirement" : language === "vi" ? "Vượt giới hạn" : "Over limit"}</strong>
           </li>
           <li className={styles.warningCheck}>
-            <span>{language === "vi" ? "Text / sản phẩm" : "Text / product"}</span>
-            <strong>{language === "vi" ? "Cần kiểm tra thủ công" : "Manual review"}</strong>
+            <span>{language === "vi" ? "Nội dung ảnh" : "Image content"}</span>
+            <strong>{language === "vi" ? "Kiểm tra sản phẩm, chữ và logo trước khi đăng" : "Check product, text, and logos before publishing"}</strong>
           </li>
         </ul>
       </section>

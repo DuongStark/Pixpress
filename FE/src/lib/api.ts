@@ -41,7 +41,7 @@ export async function fetchPresets(group?: string): Promise<ApiPreset[]> {
 }
 
 const groupTranslations: Record<string, Record<Language, string>> = {
-  ecommerce: { en: "E-commerce", vi: "Thương mại điện tử" },
+  ecommerce: { en: "Marketplace", vi: "Sàn thương mại" },
   social: { en: "Social", vi: "Mạng xã hội" },
   website: { en: "Website", vi: "Website" },
   personal: { en: "Personal", vi: "Cá nhân" },

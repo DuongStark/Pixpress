@@ -1,5 +1,5 @@
-const { listPresets } = require("../services/preset.service");
-const { validatePresetGroup } = require("../validators/preset.validator");
+import { listPresets } from "../services/preset.service.js";
+import { validatePresetGroup } from "../validators/preset.validator.js";
 
 function listPresetsHandler(req, res, next) {
   try {
@@ -15,6 +15,4 @@ function listPresetsHandler(req, res, next) {
   }
 }
 
-module.exports = {
-  listPresetsHandler,
-};
+export { listPresetsHandler };

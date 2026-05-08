@@ -1,18 +1,8 @@
-const { HttpError } = require("../middlewares/error.middleware");
+import { HttpError } from "../middlewares/error.middleware.js";
 
 const ALLOWED_GROUPS = new Set(["ecommerce", "social", "website", "personal", "custom"]);
 
-function validatePresetId(presetId) {
-  const normalized = String(presetId || "").trim();
-
-  if (!normalized) {
-    throw new HttpError(400, "presetId is required.");
-  }
-
-  return normalized;
-}
-
-function validatePresetGroup(group) {
+export function validatePresetGroup(group) {
   if (group === undefined || group === null || group === "") {
     return undefined;
   }
@@ -25,8 +15,3 @@ function validatePresetGroup(group) {
 
   return normalized;
 }
-
-module.exports = {
-  validatePresetId,
-  validatePresetGroup,
-};

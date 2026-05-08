@@ -21,9 +21,9 @@ export type PlatformPreset = {
 };
 
 export const platformPresets: PlatformPreset[] = [
-  preset("shopee-product", "E-commerce", "Thương mại điện tử", "Shopee product photo", "Shopee ảnh sản phẩm", "1:1, 1024x1024, WEBP, white background, under 500KB", "1:1, 1024x1024, WEBP, nền trắng, dưới 500KB", "webp", 1024, 1024, 500, "white", true, 12, "pad", 82, "balanced"),
-  preset("lazada-product", "E-commerce", "Thương mại điện tử", "Lazada product photo", "Lazada ảnh sản phẩm", "1:1, 1200x1200, JPG, white background, under 700KB", "1:1, 1200x1200, JPG, nền trắng, dưới 700KB", "jpg", 1200, 1200, 700, "white", true, 10, "pad", 84, "balanced"),
-  preset("tiktok-shop", "E-commerce", "Thương mại điện tử", "TikTok Shop product", "TikTok Shop ảnh sản phẩm", "1:1, 1080x1080, WEBP, clean background, under 600KB", "1:1, 1080x1080, WEBP, nền sạch, dưới 600KB", "webp", 1080, 1080, 600, "white", true, 10, "pad", 82, "balanced"),
+  preset("shopee-product", "Marketplace", "Sàn thương mại", "Shopee", "Shopee", "Square image, 1024x1024, WEBP, white background, under 500KB", "Ảnh vuông 1024x1024, WEBP, nền trắng, dưới 500KB", "webp", 1024, 1024, 500, "white", true, 12, "pad", 82, "balanced"),
+  preset("lazada-product", "Marketplace", "Sàn thương mại", "Lazada", "Lazada", "Square image, 1200x1200, JPG, white background, under 700KB", "Ảnh vuông 1200x1200, JPG, nền trắng, dưới 700KB", "jpg", 1200, 1200, 700, "white", true, 10, "pad", 84, "balanced"),
+  preset("tiktok-shop", "Marketplace", "Sàn thương mại", "TikTok Shop", "TikTok Shop", "Square image, 1080x1080, WEBP, clean background, under 600KB", "Ảnh vuông 1080x1080, WEBP, nền sạch, dưới 600KB", "webp", 1080, 1080, 600, "white", true, 10, "pad", 82, "balanced"),
   preset("facebook-post", "Social", "Mạng xã hội", "Facebook post", "Facebook post", "4:5, 1080x1350, JPG, under 700KB", "4:5, 1080x1350, JPG, dưới 700KB", "jpg", 1080, 1350, 700, "white", false, 0, "cover", 84, "balanced"),
   preset("instagram-square", "Social", "Mạng xã hội", "Instagram square", "Instagram square", "1:1, 1080x1080, JPG, under 650KB", "1:1, 1080x1080, JPG, dưới 650KB", "jpg", 1080, 1080, 650, "white", false, 0, "cover", 84, "balanced"),
   preset("tiktok-cover", "Social", "Mạng xã hội", "TikTok cover", "TikTok cover", "9:16, 1080x1920, JPG, under 900KB", "9:16, 1080x1920, JPG, dưới 900KB", "jpg", 1080, 1920, 900, "white", false, 0, "cover", 84, "balanced"),

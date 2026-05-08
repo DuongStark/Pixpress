@@ -93,7 +93,7 @@
     linear-gradient(-45deg, rgba(19, 19, 19, 0.055) 25%, transparent 25%),
     linear-gradient(45deg, transparent 75%, rgba(19, 19, 19, 0.055) 75%),
     linear-gradient(-45deg, transparent 75%, rgba(19, 19, 19, 0.055) 75%),
-    #2b2b2b;
+    var(--color-neutral);
   background-position:
     0 0,
     0 10px,
@@ -127,13 +127,14 @@
 .cropBox {
   background: #f6f3ea;
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.9),
-    0 14px 36px rgba(0, 0, 0, 0.34);
+    0 0 0 1px rgba(19, 19, 19, 0.55),
+    0 10px 24px rgba(19, 19, 19, 0.16);
+  height: 100%;
   max-height: 100%;
   max-width: 100%;
   overflow: hidden;
   position: relative;
-  width: 100%;
+  width: auto;
 }
 
 .cropBox img {
@@ -151,7 +152,7 @@
 
 .cropSelection {
   border: 2px solid #3b82f6;
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.52);
+  box-shadow: 0 0 0 9999px rgba(19, 19, 19, 0.34);
   cursor: grab;
   position: absolute;
   touch-action: none;
@@ -275,6 +276,19 @@
   font-size: 0.84rem;
   margin: 4px 0 0;
   overflow-wrap: anywhere;
+}
+
+.compact {
+  box-shadow: none;
+}
+
+.compact .cropFrame,
+.compact .imageFrame {
+  height: clamp(260px, 42vh, 430px);
+}
+
+.compact .metaGrid {
+  padding: 10px 14px 12px;
 }
 
 @media (max-width: 640px) {

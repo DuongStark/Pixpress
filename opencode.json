@@ -1,0 +1,15 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "minimax": {
+      "models": {
+        "minimax-m2.5-free": {
+          "limit": {
+            "context": 500000,
+            "output": 128000
+          }
+        }
+      }
+    }
+  }
+}

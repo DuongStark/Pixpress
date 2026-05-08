@@ -1,4 +1,4 @@
-function createRateLimitMiddleware(options = {}) {
+export function createRateLimitMiddleware(options = {}) {
   const windowMs = Number(options.windowMs) || 60 * 1000;
   const max = Number(options.max) || 120;
   const store = new Map();
@@ -35,9 +35,4 @@ function createRateLimitMiddleware(options = {}) {
   };
 }
 
-const defaultRateLimit = createRateLimitMiddleware();
-
-module.exports = {
-  createRateLimitMiddleware,
-  defaultRateLimit,
-};
+export const defaultRateLimit = createRateLimitMiddleware();
