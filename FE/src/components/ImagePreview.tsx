@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n";
 import type { ProcessOptions, UploadedImage } from "../types";
 import { formatBytes, formatDimensions } from "../lib/format";
@@ -30,8 +30,15 @@ export default function ImagePreview({
   const cropBoxRef = useRef<HTMLDivElement | null>(null);
   const dragStart = useRef<{ action: CropAction; x: number; y: number; crop: CropRect } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [previewMode, setPreviewMode] = useState<"original" | "preview">("original");
   const isCropMode = cropOptions?.resize.fitMode === "cover";
   const showRenderedPreview = Boolean(renderedPreviewUrl);
+  const showPreviewImage = showRenderedPreview && previewMode === "preview";
+  const showCropEditor = !showRenderedPreview && isCropMode;
+
+  useEffect(() => {
+    setPreviewMode(showRenderedPreview ? "preview" : "original");
+  }, [showRenderedPreview]);
 
   const handlePointerDown = useCallback(
     (action: CropAction) => (event: React.PointerEvent<HTMLElement>) => {
@@ -83,16 +90,28 @@ export default function ImagePreview({
   return (
     <section className={`${styles.preview} ${compact ? styles.compact : ""}`}>
       <div className={styles.previewHeader}>
-        <span>{showRenderedPreview ? (language === "vi" ? "Xem trước" : "Live preview") : isCropMode ? t.controls.cropPreview : t.controls.originalPreview}</span>
-        <span>{renderedDimensions ? formatDimensions(renderedDimensions.width, renderedDimensions.height) : formatDimensions(image.width, image.height)}</span>
+        <div className={styles.previewTitle}>
+          <span>{showPreviewImage ? (language === "vi" ? "Xem trước" : "Live preview") : isCropMode ? t.controls.cropPreview : t.controls.originalPreview}</span>
+          {showRenderedPreview ? (
+            <div className={styles.previewToggle} role="radiogroup" aria-label={language === "vi" ? "Chế độ xem trước" : "Preview mode"}>
+              <button aria-checked={previewMode === "original"} role="radio" type="button" onClick={() => setPreviewMode("original")}>
+                {language === "vi" ? "Gốc" : "Original"}
+              </button>
+              <button aria-checked={previewMode === "preview"} role="radio" type="button" onClick={() => setPreviewMode("preview")}>
+                Preview
+              </button>
+            </div>
+          ) : null}
+        </div>
+        <span>{showPreviewImage && renderedDimensions ? formatDimensions(renderedDimensions.width, renderedDimensions.height) : formatDimensions(image.width, image.height)}</span>
       </div>
-      <div className={showRenderedPreview ? styles.imageFrame : isCropMode ? styles.cropFrame : styles.imageFrame}>
-        {showRenderedPreview ? (
+      <div className={showCropEditor ? styles.cropFrame : styles.imageFrame}>
+        {showPreviewImage ? (
           <>
             <img src={renderedPreviewUrl || image.previewUrl} alt={image.originalName} />
             {isRenderingPreview ? <span className={styles.renderingBadge}>{language === "vi" ? "Đang cập nhật" : "Updating"}</span> : null}
           </>
-        ) : isCropMode && cropOptions ? (
+        ) : showCropEditor && cropOptions ? (
           <div
             className={`${styles.cropStage} ${isDragging ? styles.dragging : ""}`}
             onPointerCancel={handlePointerUp}

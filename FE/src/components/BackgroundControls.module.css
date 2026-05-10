@@ -3,15 +3,14 @@
   display: grid;
   gap: var(--space-sm);
   margin: 0;
-  padding: 0;
+  padding: 0 16px 16px;
 }
 
 .fieldset legend {
   color: var(--color-secondary);
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
+  font-size: 0.78rem;
+  font-weight: 500;
   margin-bottom: var(--space-sm);
-  text-transform: uppercase;
 }
 
 .segmented {
@@ -40,15 +39,12 @@
   color: var(--color-on-primary);
 }
 
-.colorRow,
-.range,
-.checks label {
+.colorRow {
   color: var(--color-secondary);
   display: grid;
-  font-size: 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 500;
   gap: 6px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .colorRow {
@@ -63,27 +59,35 @@
   padding: 2px;
 }
 
-.range span {
-  display: flex;
-  justify-content: space-between;
-}
-
-.checks {
+.toggle {
+  align-items: center;
+  border: 1px solid var(--color-secondary);
+  color: var(--color-primary);
   display: grid;
   gap: var(--space-sm);
+  grid-template-columns: 1fr auto;
+  padding: 10px 12px;
 }
 
-.checks label {
-  align-items: center;
-  display: flex;
+.toggle span {
+  display: grid;
+  gap: 2px;
+}
+
+.toggle strong {
+  font-size: 0.82rem;
+}
+
+.toggle small {
+  color: var(--color-secondary);
+  font-size: 0.72rem;
   letter-spacing: 0;
-  text-transform: none;
 }
 
-.checks input {
+.toggle input {
   accent-color: var(--color-tertiary);
-  height: 16px;
-  width: 16px;
+  height: 20px;
+  width: 20px;
 }
 
 @media (max-width: 520px) {

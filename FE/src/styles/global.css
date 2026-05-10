@@ -10,8 +10,8 @@
   --color-danger: #b42318;
   --color-line: var(--color-secondary);
   --color-panel: var(--color-surface);
-  --font-display: "VT323", "Courier New", monospace;
-  --font-body: "IBM Plex Mono", "Courier New", monospace;
+  --font-display: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --space-sm: 8px;
   --space-md: 16px;
   --space-lg: 32px;
@@ -109,7 +109,7 @@ img {
 
 .appMain {
   margin: 0 auto;
-  max-width: 1240px;
+  max-width: 1440px;
   padding: var(--space-lg);
 }
 
@@ -159,8 +159,8 @@ img {
 
 .pageHeader h1 {
   font-family: var(--font-display);
-  font-size: 3.25rem;
-  font-weight: 400;
+  font-size: 2.45rem;
+  font-weight: 760;
   line-height: 1.2;
   margin: 0;
 }

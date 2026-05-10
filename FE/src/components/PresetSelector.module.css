@@ -102,6 +102,15 @@
   justify-content: space-between;
 }
 
+.checkIcon {
+  flex: 0 0 auto;
+  opacity: 0;
+}
+
+.checkIcon[data-visible="true"] {
+  opacity: 1;
+}
+
 .cardSummary,
 .cardMeta {
   color: var(--color-secondary);

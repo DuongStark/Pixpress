@@ -1,4 +1,4 @@
-import { ArrowLeft, Layers3, Sparkles, SlidersHorizontal, Wand2 } from "lucide-react";
+import { ArrowLeft, Crop, FileOutput, Layers3, Sparkles, SlidersHorizontal, Wand2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import BackgroundControls from "../components/BackgroundControls";
@@ -8,7 +8,6 @@ import ImagePreview from "../components/ImagePreview";
 import LoadingButton from "../components/LoadingButton";
 import OptimizationGoal from "../components/OptimizationGoal";
 import QualitySlider from "../components/QualitySlider";
-import RemoveBackgroundToggle from "../components/RemoveBackgroundToggle";
 import ResizeControls from "../components/ResizeControls";
 import { useI18n } from "../i18n";
 import { processImageOnClient } from "../lib/clientImageProcessor";
@@ -238,16 +237,38 @@ export default function EditPage() {
     };
   }
 
-  const isCustomMode = editMode === "custom";
+  function resetLayout() {
+    setWidth(activeImage.width);
+    setHeight(activeImage.height);
+    setKeepAspectRatio(true);
+    setFitMode("contain");
+    setCropRect(fullCropRect());
+    setPaddingPercent(0);
+    setCenterProduct(true);
+  }
+
+  function resetOutput() {
+    setFormat(initialPreset.format);
+    setQuality(initialPreset.quality);
+    setQualityPreset(initialPreset.priority);
+    setMaxSizeKb(initialPreset.maxSizeKb);
+    setPriority(initialPreset.priority);
+  }
+
+  function resetBackground() {
+    setBackgroundMode(initialPreset.backgroundMode);
+    setBackgroundColor("#ffffff");
+    setSoftShadow(false);
+  }
+
   const canProcess = editMode === "platform" ? selectedPlatformIds.length > 0 : !dimensionsInvalid;
 
   return (
     <section className="pageStack">
-      <div className="pageHeader">
+      <div className={`pageHeader ${styles.compactHeader}`}>
         <div>
           <span className="eyebrow">{t.edit.eyebrow}</span>
           <h1>{t.edit.title}</h1>
-          <p>{t.edit.description}</p>
         </div>
       </div>
 
@@ -373,46 +394,61 @@ export default function EditPage() {
           </div>
 
           <aside className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <span>{t.edit.controls}</span>
-              <span>{isProcessing ? t.common.running : t.common.ready}</span>
-            </div>
-
             <div className={styles.stepList}>
-              <section className={styles.step}>
-                <div className={styles.stepHeader}>
-                  <span className={styles.stepNumber}>1</span>
+              <details className={styles.step} open>
+                <summary className={styles.stepHeader}>
+                  <span className={styles.stepIcon}>
+                    <Crop size={16} aria-hidden="true" />
+                  </span>
                   <div>
                     <h2>{t.edit.stepLayout}</h2>
                     <p>{t.edit.layoutHelp}</p>
                   </div>
-                </div>
+                  <button className={styles.sectionReset} disabled={isProcessing} type="button" onClick={(event) => {
+                    event.preventDefault();
+                    resetLayout();
+                  }}>
+                    ↺ {language === "vi" ? "Đặt lại" : "Reset"}
+                  </button>
+                </summary>
                 <div className={styles.stepBody}>
                   <ResizeControls
                     disabled={isProcessing}
                     fitMode={fitMode}
                     height={height}
                     keepAspectRatio={keepAspectRatio}
+                    paddingPercent={paddingPercent}
+                    centerProduct={centerProduct}
                     width={width}
                     onCropReset={() => {
                       setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, width || activeImage.width, height || activeImage.height));
                     }}
+                    onCenterProductChange={setCenterProduct}
                     onFitModeChange={setFitMode}
                     onHeightChange={handleHeightChange}
                     onKeepAspectRatioChange={setKeepAspectRatio}
+                    onPaddingChange={setPaddingPercent}
                     onWidthChange={handleWidthChange}
                   />
                 </div>
-              </section>
+              </details>
 
-              <section className={styles.step}>
-                <div className={styles.stepHeader}>
-                  <span className={styles.stepNumber}>2</span>
+              <details className={styles.step} open>
+                <summary className={styles.stepHeader}>
+                  <span className={styles.stepIcon}>
+                    <FileOutput size={16} aria-hidden="true" />
+                  </span>
                   <div>
                     <h2>{t.edit.stepOutput}</h2>
                     <p>{t.edit.outputHelp}</p>
                   </div>
-                </div>
+                  <button className={styles.sectionReset} disabled={isProcessing} type="button" onClick={(event) => {
+                    event.preventDefault();
+                    resetOutput();
+                  }}>
+                    ↺ {language === "vi" ? "Đặt lại" : "Reset"}
+                  </button>
+                </summary>
                 <div className={styles.stepBody}>
                   <div className={styles.outputGrid}>
                     <FormatSelector disabled={isProcessing} value={format} onChange={setFormat} />
@@ -433,43 +469,48 @@ export default function EditPage() {
                   <OptimizationGoal
                     activeQualityPreset={qualityPreset}
                     disabled={isProcessing}
+                    estimatedSizeBytes={estimatedSize}
                     language={language}
                     maxSizeKb={maxSizeKb}
                     onMaxSizeChange={setMaxSizeKb}
                     onQualityPresetChange={handleQualityPresetChange}
                   />
                 </div>
-              </section>
+              </details>
 
-              <section className={styles.step}>
-                <div className={styles.stepHeader}>
-                  <span className={styles.stepNumber}>3</span>
+              <details className={styles.step} open>
+                <summary className={styles.stepHeader}>
+                  <span className={styles.stepIcon}>
+                    <Layers3 size={16} aria-hidden="true" />
+                  </span>
                   <div>
                     <h2>{t.edit.stepBackground}</h2>
                     <p>{t.edit.backgroundHelp}</p>
                   </div>
-                </div>
+                  <button className={styles.sectionReset} disabled={isProcessing} type="button" onClick={(event) => {
+                    event.preventDefault();
+                    resetBackground();
+                  }}>
+                    ↺ {language === "vi" ? "Đặt lại" : "Reset"}
+                  </button>
+                </summary>
                 <div className={styles.stepBody}>
-                  <div className={styles.lockedFeature}>
-                    <RemoveBackgroundToggle checked={false} disabled onChange={() => undefined} />
-                    <p>{t.edit.removeBackgroundLocked}</p>
-                  </div>
                   <BackgroundControls
-                    centerProduct={centerProduct}
                     color={backgroundColor}
                     disabled={isProcessing}
                     language={language}
                     mode={backgroundMode}
-                    paddingPercent={paddingPercent}
                     softShadow={softShadow}
-                    onCenterProductChange={setCenterProduct}
                     onColorChange={setBackgroundColor}
                     onModeChange={setBackgroundMode}
-                    onPaddingChange={setPaddingPercent}
                     onSoftShadowChange={setSoftShadow}
                   />
+                  <div className={styles.featureBanner}>
+                    <span>{t.edit.removeBackgroundLocked}</span>
+                    <button disabled type="button">{language === "vi" ? "Đăng ký" : "Notify me"}</button>
+                  </div>
                 </div>
-              </section>
+              </details>
             </div>
 
             {dimensionsInvalid ? <ErrorAlert message={t.edit.invalidDimensions} /> : null}

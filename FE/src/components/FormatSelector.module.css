@@ -3,15 +3,14 @@
   display: grid;
   gap: var(--space-sm);
   margin: 0;
-  padding: 0;
+  padding: 0 16px 16px;
 }
 
 .fieldset legend {
   color: var(--color-secondary);
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
+  font-size: 0.78rem;
+  font-weight: 500;
   margin-bottom: var(--space-sm);
-  text-transform: uppercase;
 }
 
 .segmented {

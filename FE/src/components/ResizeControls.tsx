@@ -1,4 +1,4 @@
-import { Crop, Image, Lock, Scan } from "lucide-react";
+import { Check, Crop, Image, Lock, Scan } from "lucide-react";
 import { useI18n } from "../i18n";
 import type { Language } from "../i18n";
 import type { FitMode } from "../types";
@@ -29,11 +29,15 @@ type ResizeControlsProps = {
   height: number | null;
   keepAspectRatio: boolean;
   fitMode: FitMode;
+  paddingPercent: number;
+  centerProduct: boolean;
   disabled?: boolean;
   onWidthChange: (width: number | null) => void;
   onHeightChange: (height: number | null) => void;
   onKeepAspectRatioChange: (value: boolean) => void;
   onFitModeChange: (value: FitMode) => void;
+  onPaddingChange: (value: number) => void;
+  onCenterProductChange: (value: boolean) => void;
   onCropReset: () => void;
 };
 
@@ -42,11 +46,15 @@ export default function ResizeControls({
   height,
   keepAspectRatio,
   fitMode,
+  paddingPercent,
+  centerProduct,
   disabled = false,
   onWidthChange,
   onHeightChange,
   onKeepAspectRatioChange,
   onFitModeChange,
+  onPaddingChange,
+  onCenterProductChange,
   onCropReset,
 }: ResizeControlsProps) {
   const { language, t } = useI18n();
@@ -86,6 +94,29 @@ export default function ResizeControls({
         <Lock size={16} aria-hidden="true" />
         {t.controls.keepAspect}
       </label>
+      <label className={styles.range}>
+        <span>
+          {language === "vi" ? "Khoảng cách viền" : "Padding"} <strong>{paddingPercent}%</strong>
+        </span>
+        <input
+          disabled={disabled}
+          max={30}
+          min={0}
+          type="range"
+          value={paddingPercent}
+          onChange={(event) => onPaddingChange(Number(event.target.value))}
+        />
+      </label>
+      <label className={styles.checkbox}>
+        <input
+          checked={centerProduct}
+          disabled={disabled}
+          type="checkbox"
+          onChange={(event) => onCenterProductChange(event.target.checked)}
+        />
+        <Scan size={16} aria-hidden="true" />
+        {language === "vi" ? "Căn giữa sản phẩm" : "Center product"}
+      </label>
       <div className={styles.segmented} role="radiogroup" aria-label={language === "vi" ? "Cách canh ảnh" : "Image framing"}>
         {fitModes.map((mode) => {
           const Icon = fitIcons[mode];
@@ -102,6 +133,7 @@ export default function ResizeControls({
             >
               <Icon size={15} aria-hidden="true" />
               <span>{fitLabels[mode][language]}</span>
+              <Check className={styles.checkIcon} data-visible={fitMode === mode} size={14} aria-hidden="true" />
             </button>
           );
         })}

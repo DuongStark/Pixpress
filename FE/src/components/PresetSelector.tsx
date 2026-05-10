@@ -100,7 +100,7 @@ export default function PresetSelector({ language, selectedId, disabled = false,
                 >
                   <span className={styles.cardTitle}>
                     {preset.name[language]}
-                    {selected ? <Check size={16} aria-hidden="true" /> : null}
+                    <Check className={styles.checkIcon} data-visible={selected} size={16} aria-hidden="true" />
                   </span>
                   <span className={styles.cardSummary}>{preset.summary[language]}</span>
                   <span className={styles.cardMeta} title={getFormatTooltip(preset.format, language)}>

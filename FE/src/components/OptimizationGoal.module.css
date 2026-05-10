@@ -3,24 +3,22 @@
   display: grid;
   gap: var(--space-sm);
   margin: 0;
-  padding: 0;
+  padding: 0 16px 16px;
 }
 
 .fieldset legend {
   color: var(--color-secondary);
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
+  font-size: 0.78rem;
+  font-weight: 500;
   margin-bottom: var(--space-sm);
-  text-transform: uppercase;
 }
 
 .inputLabel {
   color: var(--color-secondary);
   display: grid;
-  font-size: 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 500;
   gap: 6px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .inputLabel span {
@@ -82,4 +80,18 @@
   color: var(--color-secondary);
   line-height: 1.45;
   margin: 0;
+}
+
+.sizeStatus {
+  border: 1px solid currentColor;
+  font-size: 0.76rem;
+  padding: 8px 10px;
+}
+
+.sizeStatusOk {
+  color: var(--color-success) !important;
+}
+
+.sizeStatusDanger {
+  color: var(--color-danger) !important;
 }

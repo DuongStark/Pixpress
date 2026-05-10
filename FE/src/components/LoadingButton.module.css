@@ -1,7 +1,7 @@
 .button {
   align-items: center;
-  background: var(--color-tertiary);
-  border: 1px solid var(--color-tertiary);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
   color: var(--color-on-primary);
   cursor: pointer;
   display: inline-flex;
@@ -11,7 +11,6 @@
   justify-content: center;
   min-height: 44px;
   padding: 12px 20px;
-  text-transform: uppercase;
   transition:
     background-color var(--motion-fast),
     border-color var(--motion-fast),
@@ -20,6 +19,8 @@
 }
 
 .button:hover:not(:disabled) {
+  background: var(--color-tertiary);
+  border-color: var(--color-tertiary);
   transform: translateY(-1px);
 }
 

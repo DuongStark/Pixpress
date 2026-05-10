@@ -1,5 +1,6 @@
 import type { Language } from "../i18n";
 import { OptimizationPriority } from "../types";
+import { formatBytes } from "../lib/format";
 import styles from "./OptimizationGoal.module.css";
 
 const priorities: OptimizationPriority[] = ["smallest", "balanced", "best"];
@@ -19,6 +20,7 @@ const qualityValues: Record<OptimizationPriority, number> = {
 type OptimizationGoalProps = {
   language: Language;
   maxSizeKb: number;
+  estimatedSizeBytes: number;
   activeQualityPreset: OptimizationPriority | null;
   disabled?: boolean;
   onMaxSizeChange: (value: number) => void;
@@ -28,16 +30,18 @@ type OptimizationGoalProps = {
 export default function OptimizationGoal({
   language,
   maxSizeKb,
+  estimatedSizeBytes,
   activeQualityPreset,
   disabled = false,
   onMaxSizeChange,
   onQualityPresetChange,
 }: OptimizationGoalProps) {
+  const isOverLimit = estimatedSizeBytes > maxSizeKb * 1024;
+
   return (
     <fieldset className={styles.fieldset}>
-      <legend>{language === "vi" ? "Dung lượng tối đa" : "Max file size"}</legend>
       <label className={styles.inputLabel}>
-        {language === "vi" ? "Giới hạn dung lượng" : "File size limit"}
+        {language === "vi" ? "Dung lượng tối đa" : "Maximum file size"}
         <span>
           <input
             disabled={disabled}
@@ -49,6 +53,15 @@ export default function OptimizationGoal({
           <strong>KB</strong>
         </span>
       </label>
+      <p className={`${styles.sizeStatus} ${isOverLimit ? styles.sizeStatusDanger : styles.sizeStatusOk}`}>
+        {isOverLimit
+          ? language === "vi"
+            ? `Ảnh ước tính ${formatBytes(estimatedSizeBytes)} - vượt giới hạn, hãy giảm quality.`
+            : `Estimated ${formatBytes(estimatedSizeBytes)} - over limit, lower quality.`
+          : language === "vi"
+            ? `Ảnh ước tính ${formatBytes(estimatedSizeBytes)} - trong giới hạn.`
+            : `Estimated ${formatBytes(estimatedSizeBytes)} - within limit.`}
+      </p>
       <div className={styles.segmented} role="group" aria-label={language === "vi" ? "Preset chất lượng" : "Quality presets"}>
         {priorities.map((option) => (
           <button
