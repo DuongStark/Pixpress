@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { Analytics } from "@vercel/analytics/react";
 import AppHeader from "./components/AppHeader";
 import EditPage from "./pages/EditPage";
 import ExportPage from "./pages/ExportPage";
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <Analytics />
     </div>
   );
 }
