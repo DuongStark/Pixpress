@@ -1,7 +1,7 @@
 import type { Language } from "../i18n";
 import type { BackgroundMode, FitMode, ImageFormat, OptimizationPriority } from "../types";
 
-const API_BASE = "/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://api.pixpress.art/api";
 
 export type ApiPresetOutput = {
   format: string;
