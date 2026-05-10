@@ -1,5 +1,5 @@
-import { ArrowLeft, Layers3, Sparkles, SlidersHorizontal, Wand2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { ArrowLeft, Layers3, Sparkles, SlidersHorizontal, Wand2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import BackgroundControls from "../components/BackgroundControls";
 import ErrorAlert from "../components/ErrorAlert";
@@ -7,6 +7,7 @@ import FormatSelector from "../components/FormatSelector";
 import ImagePreview from "../components/ImagePreview";
 import LoadingButton from "../components/LoadingButton";
 import OptimizationGoal from "../components/OptimizationGoal";
+import PresetSelector from "../components/PresetSelector";
 import QualitySlider from "../components/QualitySlider";
 import RemoveBackgroundToggle from "../components/RemoveBackgroundToggle";
 import ResizeControls from "../components/ResizeControls";
@@ -37,7 +38,6 @@ export default function EditPage() {
   const [selectedPreset, setSelectedPreset] = useState<PlatformPreset>(initialPreset);
   const [format, setFormat] = useState<ImageFormat>(initialPreset.format);
   const [quality, setQuality] = useState(initialPreset.quality);
-  const [qualityPreset, setQualityPreset] = useState<OptimizationPriority | null>(initialPreset.priority);
   const [width, setWidth] = useState<number | null>(initialPreset.width || image?.width || null);
   const [height, setHeight] = useState<number | null>(initialPreset.height || image?.height || null);
   const [keepAspectRatio, setKeepAspectRatio] = useState(true);
@@ -54,82 +54,6 @@ export default function EditPage() {
   const [softShadow, setSoftShadow] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processError, setProcessError] = useState<string | null>(null);
-  const [livePreview, setLivePreview] = useState<{ url: string; width: number; height: number } | null>(null);
-  const [isRenderingPreview, setIsRenderingPreview] = useState(false);
-  const livePreviewUrlRef = useRef<string | null>(null);
-  const dimensionsInvalid = isInvalidDimension(width) || isInvalidDimension(height);
-
-  useEffect(() => {
-    if (!image || image.imageId !== imageId || editMode !== "custom" || dimensionsInvalid) {
-      setIsRenderingPreview(false);
-      setLivePreview((previous) => {
-        if (previous) URL.revokeObjectURL(previous.url);
-        livePreviewUrlRef.current = null;
-        return null;
-      });
-      return;
-    }
-
-    let cancelled = false;
-    const options = createOptions();
-    setIsRenderingPreview(true);
-
-    const timeoutId = window.setTimeout(async () => {
-      try {
-        const result = await processImageOnClient(image, options);
-        if (cancelled) {
-          URL.revokeObjectURL(result.previewUrl);
-          return;
-        }
-
-        setLivePreview((previous) => {
-          if (previous) URL.revokeObjectURL(previous.url);
-          livePreviewUrlRef.current = result.previewUrl;
-          return { url: result.previewUrl, width: result.width, height: result.height };
-        });
-      } catch (err) {
-        console.warn("Failed to render live preview:", err);
-      } finally {
-        if (!cancelled) {
-          setIsRenderingPreview(false);
-        }
-      }
-    }, 300);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timeoutId);
-    };
-  }, [
-    image,
-    imageId,
-    editMode,
-    dimensionsInvalid,
-    format,
-    quality,
-    width,
-    height,
-    keepAspectRatio,
-    fitMode,
-    cropRect,
-    maxSizeKb,
-    priority,
-    backgroundMode,
-    backgroundColor,
-    paddingPercent,
-    centerProduct,
-    softShadow,
-    selectedPreset,
-    language,
-  ]);
-
-  useEffect(() => {
-    return () => {
-      if (livePreviewUrlRef.current) {
-        URL.revokeObjectURL(livePreviewUrlRef.current);
-      }
-    };
-  }, []);
 
   if (!image || image.imageId !== imageId) {
     return <Navigate to="/" replace />;
@@ -137,6 +61,7 @@ export default function EditPage() {
 
   const activeImage = image;
   const aspectRatio = activeImage.width / activeImage.height;
+  const dimensionsInvalid = isInvalidDimension(width) || isInvalidDimension(height);
   const currentOptions = createOptions();
   const estimatedSize = estimateResultSize(
     activeImage,
@@ -160,7 +85,6 @@ export default function EditPage() {
     setSelectedPreset(preset);
     setFormat(preset.format);
     setQuality(preset.quality);
-    setQualityPreset(preset.priority);
     setWidth(preset.width || activeImage.width);
     setHeight(preset.height || activeImage.height);
     setFitMode(preset.fitMode);
@@ -171,18 +95,6 @@ export default function EditPage() {
     setPaddingPercent(preset.paddingPercent);
     setCenterProduct(preset.paddingPercent > 0);
     setSoftShadow(false);
-  }
-
-  function handleQualityChange(nextQuality: number) {
-    setQuality(nextQuality);
-    setQualityPreset(null);
-    setPriority("smallest");
-  }
-
-  function handleQualityPresetChange(nextPriority: OptimizationPriority, nextQuality: number) {
-    setPriority(nextPriority);
-    setQuality(nextQuality);
-    setQualityPreset(nextPriority);
   }
 
   function handleWidthChange(nextWidth: number | null) {
@@ -231,10 +143,7 @@ export default function EditPage() {
       removeBackground: false,
       goal: { maxSizeKb, priority },
       background: { mode: backgroundMode, color: backgroundColor, paddingPercent, centerProduct, softShadow },
-      preset:
-        editMode === "custom"
-          ? { id: "custom", name: language === "vi" ? "Tự chỉnh" : "Custom" }
-          : { id: selectedPreset.id, name: selectedPreset.name[language] },
+      preset: { id: selectedPreset.id, name: selectedPreset.name[language] },
     };
   }
 
@@ -251,7 +160,7 @@ export default function EditPage() {
         </div>
       </div>
 
-      <div className={styles.modeTabs} role="tablist" aria-label={language === "vi" ? "Chế độ xử lý" : "Processing mode"}>
+      <div className={styles.modeTabs} role="tablist" aria-label={language === "vi" ? "Cháº¿ Ä‘á»™ xá»­ lÃ½" : "Processing mode"}>
         <button
           className={`${styles.modeTab} ${editMode === "platform" ? styles.modeTabActive : ""}`}
           role="tab"
@@ -287,7 +196,7 @@ export default function EditPage() {
           <aside className={styles.panel}>
             <div className={styles.panelHeader}>
               <span>{t.edit.platformModeTitle}</span>
-              <span>{selectedPlatformIds.length} {language === "vi" ? "sàn" : "platforms"}</span>
+              <span>{selectedPlatformIds.length} {language === "vi" ? "sÃ n" : "platforms"}</span>
             </div>
 
             <div className={styles.platformDesc}>
@@ -308,10 +217,10 @@ export default function EditPage() {
                     <span className={styles.platformCardCheck} aria-hidden="true" />
                     <strong className={styles.platformCardName}>{preset.name[language]}</strong>
                     <span className={styles.platformCardSpec}>
-                      {preset.width}×{preset.height} · {preset.format.toUpperCase()} · ≤{preset.maxSizeKb}KB
+                      {preset.width}Ã—{preset.height} Â· {preset.format.toUpperCase()} Â· â‰¤{preset.maxSizeKb}KB
                     </span>
                     <span className={styles.platformCardBg}>
-                      {language === "vi" ? "Ảnh vuông · Nền trắng" : "Square crop · White background"}
+                      {language === "vi" ? "áº¢nh vuÃ´ng Â· Ná»n tráº¯ng" : "Square crop Â· White background"}
                     </span>
                   </button>
                 );
@@ -319,7 +228,7 @@ export default function EditPage() {
             </div>
 
             <div className={styles.comingSoonNote}>
-              <span className={styles.comingSoonBadge}>{language === "vi" ? "Sắp có" : "Coming soon"}</span>
+              <span className={styles.comingSoonBadge}>{language === "vi" ? "Sáº¯p cÃ³" : "Coming soon"}</span>
               <span>{t.edit.platformBgRemovalNote}</span>
             </div>
 
@@ -349,15 +258,12 @@ export default function EditPage() {
             <ImagePreview
               cropOptions={fitMode === "cover" ? currentOptions : undefined}
               image={activeImage}
-              isRenderingPreview={isRenderingPreview}
-              renderedDimensions={livePreview ? { width: livePreview.width, height: livePreview.height } : null}
-              renderedPreviewUrl={livePreview?.url}
               onCropChange={setCropRect}
             />
             <div className={styles.quickStatus}>
               <div>
                 <span>{t.edit.output}</span>
-                <strong>{language === "vi" ? "Tự chỉnh" : "Custom"}</strong>
+                <strong>{selectedPreset.name[language]}</strong>
               </div>
               <div>
                 <span>{t.common.dimensions}</span>
@@ -378,97 +284,78 @@ export default function EditPage() {
               <span>{isProcessing ? t.common.running : t.common.ready}</span>
             </div>
 
-            <div className={styles.stepList}>
-              <section className={styles.step}>
-                <div className={styles.stepHeader}>
-                  <span className={styles.stepNumber}>1</span>
-                  <div>
-                    <h2>{t.edit.stepLayout}</h2>
-                    <p>{t.edit.layoutHelp}</p>
-                  </div>
+            <div className={styles.customForm}>
+              <section className={styles.controlSection}>
+                <div className={styles.controlSectionHeader}>
+                  <h2>{t.edit.stepTarget}</h2>
+                  <p>{t.edit.targetHelp}</p>
                 </div>
-                <div className={styles.stepBody}>
-                  <ResizeControls
-                    disabled={isProcessing}
-                    fitMode={fitMode}
-                    height={height}
-                    keepAspectRatio={keepAspectRatio}
-                    width={width}
-                    onCropReset={() => {
-                      setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, width || activeImage.width, height || activeImage.height));
-                    }}
-                    onFitModeChange={setFitMode}
-                    onHeightChange={handleHeightChange}
-                    onKeepAspectRatioChange={setKeepAspectRatio}
-                    onWidthChange={handleWidthChange}
-                  />
-                </div>
+                <PresetSelector disabled={isProcessing} language={language} selectedId={selectedPreset.id} onSelect={handlePresetSelect} />
               </section>
 
-              <section className={styles.step}>
-                <div className={styles.stepHeader}>
-                  <span className={styles.stepNumber}>2</span>
-                  <div>
-                    <h2>{t.edit.stepOutput}</h2>
-                    <p>{t.edit.outputHelp}</p>
-                  </div>
+              <section className={styles.controlSection}>
+                <div className={styles.controlSectionHeader}>
+                  <h2>{t.edit.stepLayout}</h2>
+                  <p>{t.edit.layoutHelp}</p>
                 </div>
-                <div className={styles.stepBody}>
-                  <div className={styles.outputGrid}>
-                    <FormatSelector disabled={isProcessing} value={format} onChange={setFormat} />
-                    <QualitySlider
-                      disabled={isProcessing}
-                      estimatedSize={formatBytes(estimatedSize)}
-                      modeLabel={
-                        qualityPreset
-                          ? `${language === "vi" ? "Preset" : "Preset"}: ${qualityPreset}`
-                          : language === "vi"
-                            ? "Đang chỉnh tay"
-                            : "Manual quality"
-                      }
-                      value={quality}
-                      onChange={handleQualityChange}
-                    />
-                  </div>
-                  <OptimizationGoal
-                    activeQualityPreset={qualityPreset}
-                    disabled={isProcessing}
-                    language={language}
-                    maxSizeKb={maxSizeKb}
-                    onMaxSizeChange={setMaxSizeKb}
-                    onQualityPresetChange={handleQualityPresetChange}
-                  />
-                </div>
+                <ResizeControls
+                  disabled={isProcessing}
+                  fitMode={fitMode}
+                  height={height}
+                  keepAspectRatio={keepAspectRatio}
+                  width={width}
+                  onCropReset={() => {
+                    setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, width || activeImage.width, height || activeImage.height));
+                  }}
+                  onFitModeChange={setFitMode}
+                  onHeightChange={handleHeightChange}
+                  onKeepAspectRatioChange={setKeepAspectRatio}
+                  onWidthChange={handleWidthChange}
+                />
               </section>
 
-              <section className={styles.step}>
-                <div className={styles.stepHeader}>
-                  <span className={styles.stepNumber}>3</span>
-                  <div>
-                    <h2>{t.edit.stepBackground}</h2>
-                    <p>{t.edit.backgroundHelp}</p>
-                  </div>
+              <section className={styles.controlSection}>
+                <div className={styles.controlSectionHeader}>
+                  <h2>{t.edit.stepOutput}</h2>
+                  <p>{t.edit.outputHelp}</p>
                 </div>
-                <div className={styles.stepBody}>
-                  <div className={styles.lockedFeature}>
-                    <RemoveBackgroundToggle checked={false} disabled onChange={() => undefined} />
-                    <p>{t.edit.removeBackgroundLocked}</p>
-                  </div>
-                  <BackgroundControls
-                    centerProduct={centerProduct}
-                    color={backgroundColor}
-                    disabled={isProcessing}
-                    language={language}
-                    mode={backgroundMode}
-                    paddingPercent={paddingPercent}
-                    softShadow={softShadow}
-                    onCenterProductChange={setCenterProduct}
-                    onColorChange={setBackgroundColor}
-                    onModeChange={setBackgroundMode}
-                    onPaddingChange={setPaddingPercent}
-                    onSoftShadowChange={setSoftShadow}
-                  />
+                <div className={styles.outputGrid}>
+                  <FormatSelector disabled={isProcessing} value={format} onChange={setFormat} />
+                  <QualitySlider disabled={isProcessing} estimatedSize={formatBytes(estimatedSize)} value={quality} onChange={setQuality} />
                 </div>
+                <OptimizationGoal
+                  disabled={isProcessing}
+                  language={language}
+                  maxSizeKb={maxSizeKb}
+                  priority={priority}
+                  onMaxSizeChange={setMaxSizeKb}
+                  onPriorityChange={setPriority}
+                />
+              </section>
+
+              <section className={styles.controlSection}>
+                <div className={styles.controlSectionHeader}>
+                  <h2>{t.edit.stepBackground}</h2>
+                  <p>{t.edit.backgroundHelp}</p>
+                </div>
+                <div className={styles.lockedFeature}>
+                  <RemoveBackgroundToggle checked={false} disabled onChange={() => undefined} />
+                  <p>{t.edit.removeBackgroundLocked}</p>
+                </div>
+                <BackgroundControls
+                  centerProduct={centerProduct}
+                  color={backgroundColor}
+                  disabled={isProcessing}
+                  language={language}
+                  mode={backgroundMode}
+                  paddingPercent={paddingPercent}
+                  softShadow={softShadow}
+                  onCenterProductChange={setCenterProduct}
+                  onColorChange={setBackgroundColor}
+                  onModeChange={setBackgroundMode}
+                  onPaddingChange={setPaddingPercent}
+                  onSoftShadowChange={setSoftShadow}
+                />
               </section>
             </div>
 
@@ -518,3 +405,4 @@ function getDefaultCropRect(sourceWidth: number, sourceHeight: number, targetWid
   const height = (sourceRatio / targetRatio) * 100;
   return { x: 0, y: (100 - height) / 2, width: 100, height };
 }
+

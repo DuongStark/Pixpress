@@ -11,15 +11,27 @@ type ImagePreviewProps = {
   image: UploadedImage;
   cropOptions?: Pick<ProcessOptions, "resize" | "crop">;
   compact?: boolean;
+  renderedPreviewUrl?: string | null;
+  renderedDimensions?: { width: number; height: number } | null;
+  isRenderingPreview?: boolean;
   onCropChange?: (crop: CropRect) => void;
 };
 
-export default function ImagePreview({ image, compact = false, cropOptions, onCropChange }: ImagePreviewProps) {
-  const { t } = useI18n();
+export default function ImagePreview({
+  image,
+  compact = false,
+  cropOptions,
+  renderedPreviewUrl,
+  renderedDimensions,
+  isRenderingPreview = false,
+  onCropChange,
+}: ImagePreviewProps) {
+  const { language, t } = useI18n();
   const cropBoxRef = useRef<HTMLDivElement | null>(null);
   const dragStart = useRef<{ action: CropAction; x: number; y: number; crop: CropRect } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const isCropMode = cropOptions?.resize.fitMode === "cover";
+  const showRenderedPreview = Boolean(renderedPreviewUrl);
 
   const handlePointerDown = useCallback(
     (action: CropAction) => (event: React.PointerEvent<HTMLElement>) => {
@@ -71,11 +83,16 @@ export default function ImagePreview({ image, compact = false, cropOptions, onCr
   return (
     <section className={`${styles.preview} ${compact ? styles.compact : ""}`}>
       <div className={styles.previewHeader}>
-        <span>{isCropMode ? t.controls.cropPreview : t.controls.originalPreview}</span>
-        <span>{formatDimensions(image.width, image.height)}</span>
+        <span>{showRenderedPreview ? (language === "vi" ? "Xem trước" : "Live preview") : isCropMode ? t.controls.cropPreview : t.controls.originalPreview}</span>
+        <span>{renderedDimensions ? formatDimensions(renderedDimensions.width, renderedDimensions.height) : formatDimensions(image.width, image.height)}</span>
       </div>
-      <div className={isCropMode ? styles.cropFrame : styles.imageFrame}>
-        {isCropMode && cropOptions ? (
+      <div className={showRenderedPreview ? styles.imageFrame : isCropMode ? styles.cropFrame : styles.imageFrame}>
+        {showRenderedPreview ? (
+          <>
+            <img src={renderedPreviewUrl || image.previewUrl} alt={image.originalName} />
+            {isRenderingPreview ? <span className={styles.renderingBadge}>{language === "vi" ? "Đang cập nhật" : "Updating"}</span> : null}
+          </>
+        ) : isCropMode && cropOptions ? (
           <div
             className={`${styles.cropStage} ${isDragging ? styles.dragging : ""}`}
             onPointerCancel={handlePointerUp}

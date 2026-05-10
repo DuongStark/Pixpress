@@ -10,22 +10,28 @@ const priorityLabels: Record<OptimizationPriority, Record<Language, string>> = {
   best: { en: "Best quality", vi: "Đẹp nhất" },
 };
 
+const qualityValues: Record<OptimizationPriority, number> = {
+  smallest: 60,
+  balanced: 75,
+  best: 90,
+};
+
 type OptimizationGoalProps = {
   language: Language;
   maxSizeKb: number;
-  priority: OptimizationPriority;
+  activeQualityPreset: OptimizationPriority | null;
   disabled?: boolean;
   onMaxSizeChange: (value: number) => void;
-  onPriorityChange: (value: OptimizationPriority) => void;
+  onQualityPresetChange: (value: OptimizationPriority, quality: number) => void;
 };
 
 export default function OptimizationGoal({
   language,
   maxSizeKb,
-  priority,
+  activeQualityPreset,
   disabled = false,
   onMaxSizeChange,
-  onPriorityChange,
+  onQualityPresetChange,
 }: OptimizationGoalProps) {
   return (
     <fieldset className={styles.fieldset}>
@@ -43,23 +49,24 @@ export default function OptimizationGoal({
           <strong>KB</strong>
         </span>
       </label>
-      <div className={styles.segmented} role="group" aria-label={language === "vi" ? "Ưu tiên tối ưu" : "Optimization priority"}>
+      <div className={styles.segmented} role="group" aria-label={language === "vi" ? "Preset chất lượng" : "Quality presets"}>
         {priorities.map((option) => (
           <button
-            className={option === priority ? styles.active : ""}
+            className={option === activeQualityPreset ? styles.active : ""}
             disabled={disabled}
             key={option}
             type="button"
-            onClick={() => onPriorityChange(option)}
+            onClick={() => onQualityPresetChange(option, qualityValues[option])}
           >
             {priorityLabels[option][language]}
+            <span>{qualityValues[option]}</span>
           </button>
         ))}
       </div>
       <p>
         {language === "vi"
-          ? `Pixpress sẽ cố đưa ảnh xuống dưới ${maxSizeKb}KB.`
-          : `Pixpress will try to bring the image under ${maxSizeKb}KB.`}
+          ? `Preset đặt slider chất lượng. Kéo slider để chỉnh tay và bỏ chọn preset. Mục tiêu: dưới ${maxSizeKb}KB.`
+          : `Presets set the quality slider. Moving the slider switches to manual quality. Target: under ${maxSizeKb}KB.`}
       </p>
     </fieldset>
   );
