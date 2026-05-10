@@ -92,20 +92,19 @@
 }
 
 .step {
-  border-bottom: 1px solid var(--color-secondary);
+  border-bottom: 1px solid rgba(94, 94, 94, 0.22);
   display: grid;
 }
 
 .stepHeader {
   align-items: start;
-  background:
-    linear-gradient(90deg, rgba(26, 109, 175, 0.09), transparent 72%),
-    var(--color-neutral);
+  background: #ebe8df;
+  border-bottom: 1px solid rgba(94, 94, 94, 0.32);
   display: grid;
   gap: var(--space-sm);
   grid-template-columns: auto minmax(0, 1fr) auto;
   list-style: none;
-  padding: 14px 16px;
+  padding: 16px;
 }
 
 .stepHeader::-webkit-details-marker {
@@ -115,7 +114,9 @@
 .stepHeader h2 {
   color: var(--color-primary);
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  font-weight: 680;
+  letter-spacing: 0;
   margin: 0;
 }
 
@@ -125,7 +126,8 @@
   border: 0;
   color: var(--color-secondary);
   cursor: pointer;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
+  font-weight: 500;
   padding: 2px 0;
   white-space: nowrap;
 }
@@ -142,22 +144,25 @@
 
 .stepHeader p {
   color: var(--color-secondary);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   line-height: 1.45;
   margin: 4px 0 0;
 }
 
 .stepIcon {
   align-items: center;
-  background: var(--color-primary);
-  color: var(--color-on-primary);
+  background: var(--color-surface);
+  border: 1px solid rgba(94, 94, 94, 0.36);
+  border-radius: 999px;
+  color: var(--color-primary);
   display: inline-flex;
-  height: 24px;
+  height: 32px;
   justify-content: center;
-  width: 24px;
+  width: 32px;
 }
 
 .stepBody {
+  background: var(--color-surface);
   display: grid;
 }
 

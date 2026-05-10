@@ -37,12 +37,12 @@ export default function EditPage() {
   const [format, setFormat] = useState<ImageFormat>(initialPreset.format);
   const [quality, setQuality] = useState(initialPreset.quality);
   const [qualityPreset, setQualityPreset] = useState<OptimizationPriority | null>(initialPreset.priority);
-  const [width, setWidth] = useState<number | null>(initialPreset.width || image?.width || null);
-  const [height, setHeight] = useState<number | null>(initialPreset.height || image?.height || null);
+  const [width, setWidth] = useState<number | null>(image?.width || null);
+  const [height, setHeight] = useState<number | null>(image?.height || null);
   const [keepAspectRatio, setKeepAspectRatio] = useState(true);
   const [fitMode, setFitMode] = useState<FitMode>(initialPreset.fitMode);
   const [cropRect, setCropRect] = useState(() =>
-    image ? getDefaultCropRect(image.width, image.height, initialPreset.width || image.width, initialPreset.height || image.height) : fullCropRect(),
+    image ? getDefaultCropRect(image.width, image.height, image.width, image.height) : fullCropRect(),
   );
   const [maxSizeKb, setMaxSizeKb] = useState(initialPreset.maxSizeKb);
   const [priority, setPriority] = useState<OptimizationPriority>(initialPreset.priority);

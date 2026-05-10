@@ -14,19 +14,16 @@
 
 .previewHeader {
   align-items: center;
-  background:
-    linear-gradient(90deg, rgba(26, 109, 175, 0.1), transparent 62%),
-    #f6f3ea;
-  border-bottom: 1px solid rgba(94, 94, 94, 0.45);
+  background: rgba(244, 241, 232, 0.92);
+  border-bottom: 1px solid rgba(94, 94, 94, 0.24);
   color: var(--color-secondary);
   display: flex;
-  font-size: 0.75rem;
+  font-size: 0.82rem;
   justify-content: space-between;
-  min-height: 40px;
+  min-height: 46px;
   overflow: hidden;
-  padding: 10px 12px;
+  padding: 10px 14px;
   position: relative;
-  text-transform: uppercase;
 }
 
 .previewTitle {
@@ -37,7 +34,9 @@
 }
 
 .previewToggle {
-  border: 1px solid rgba(94, 94, 94, 0.55);
+  background: rgba(255, 255, 255, 0.48);
+  border: 1px solid rgba(94, 94, 94, 0.24);
+  border-radius: 999px;
   display: inline-flex;
   overflow: hidden;
   position: relative;
@@ -47,33 +46,22 @@
 .previewToggle button {
   background: transparent;
   border: 0;
-  border-right: 1px solid rgba(94, 94, 94, 0.55);
   color: var(--color-secondary);
   cursor: pointer;
-  font-size: 0.66rem;
-  min-height: 26px;
-  padding: 0 8px;
-  text-transform: uppercase;
-}
-
-.previewToggle button:last-child {
-  border-right: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  min-height: 28px;
+  padding: 0 10px;
 }
 
 .previewToggle button[aria-checked="true"] {
   background: var(--color-primary);
+  border-radius: 999px;
   color: var(--color-on-primary);
 }
 
 .previewHeader::after {
-  animation: headerSweep 2.8s linear infinite;
-  background: linear-gradient(90deg, transparent, rgba(26, 109, 175, 0.22), transparent);
-  bottom: 0;
-  content: "";
-  height: 1px;
-  left: 0;
-  position: absolute;
-  right: 0;
+  content: none;
 }
 
 .previewHeader > span,
@@ -83,8 +71,8 @@
 }
 
 .previewTitle > span {
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-weight: 650;
+  letter-spacing: 0;
 }
 
 .previewHeader > span:last-child {
