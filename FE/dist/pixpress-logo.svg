@@ -11,6 +11,6 @@
   <path d="M78 52H94V58H78V52Z" fill="#1A6DAF"/>
   <path d="M91 35L102 44L91 53V35Z" fill="#1A6DAF"/>
   <path d="M91 46L102 55L91 64V46Z" fill="#1A6DAF"/>
-  <text x="116" y="57" fill="#131313" font-family="VT323, 'Courier New', monospace" font-size="52">Pixpress</text>
-  <text x="119" y="77" fill="#5E5E5E" font-family="IBM Plex Mono, 'Courier New', monospace" font-size="11" letter-spacing="2">IMAGE PIPELINE</text>
+  <text x="116" y="54" fill="#131313" font-family="Inter, Arial, sans-serif" font-size="46" font-weight="520">Pixpress</text>
+  <text x="119" y="78" fill="#5E5E5E" font-family="Inter, Arial, sans-serif" font-size="10" letter-spacing="2">IMAGE PIPELINE</text>
 </svg>
