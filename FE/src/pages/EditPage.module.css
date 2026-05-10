@@ -105,6 +105,15 @@
   background: var(--editor-surface, var(--color-surface));
   border: 1px solid var(--editor-border, rgba(94, 94, 94, 0.22));
   display: grid;
+  transition:
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast),
+    transform var(--motion-fast);
+}
+
+.step:hover {
+  border-color: rgba(26, 109, 175, 0.36);
+  box-shadow: 0 2px 8px rgba(19, 19, 19, 0.06);
 }
 
 .customPanel {
@@ -122,6 +131,11 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   list-style: none;
   padding: 16px;
+  transition: background-color var(--motion-fast);
+}
+
+.stepHeader:hover {
+  background: #f2eee5;
 }
 
 .stepHeader::-webkit-details-marker {
@@ -146,6 +160,9 @@
   font-size: 0.76rem;
   font-weight: 500;
   padding: 2px 0;
+  transition:
+    color var(--motion-fast),
+    opacity var(--motion-fast);
   white-space: nowrap;
 }
 
@@ -157,6 +174,14 @@
 .sectionReset:disabled {
   cursor: not-allowed;
   opacity: 0.45;
+}
+
+.sectionReset:focus-visible,
+.modeTab:focus-visible,
+.secondaryAction:focus-visible,
+.featureBanner button:focus-visible {
+  outline: 2px solid rgba(26, 109, 175, 0.58);
+  outline-offset: 2px;
 }
 
 .stepHeader p {
@@ -175,7 +200,17 @@
   display: inline-flex;
   height: 32px;
   justify-content: center;
+  transition:
+    background-color var(--motion-fast),
+    border-color var(--motion-fast),
+    transform var(--motion-fast);
   width: 32px;
+}
+
+.stepHeader:hover .stepIcon {
+  background: rgba(26, 109, 175, 0.12);
+  border-color: rgba(26, 109, 175, 0.36);
+  transform: translateY(-1px);
 }
 
 .stepBody {
@@ -222,7 +257,8 @@
   transition:
     background var(--motion-fast),
     box-shadow var(--motion-fast),
-    color var(--motion-fast);
+    color var(--motion-fast),
+    transform var(--motion-fast);
 }
 
 .modeTab:last-child {
@@ -232,6 +268,7 @@
 .modeTab:hover {
   background: var(--editor-surface);
   color: var(--color-primary);
+  transform: translateY(-1px);
 }
 
 .modeTabActive {
@@ -508,8 +545,12 @@
   background: transparent;
   border: 1px solid var(--editor-border, var(--color-secondary));
   color: var(--editor-muted, var(--color-secondary));
+  cursor: not-allowed;
   min-height: 30px;
   padding: 0 10px;
+  transition:
+    border-color var(--motion-fast),
+    color var(--motion-fast);
 }
 
 @keyframes panelIn {

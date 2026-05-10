@@ -33,6 +33,7 @@
   min-width: 46px;
   padding: 4px 8px;
   text-align: center;
+  transition: border-color var(--motion-fast);
 }
 
 .inputs {
@@ -58,6 +59,10 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   min-height: 42px;
+  transition:
+    background-color var(--motion-fast),
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast);
 }
 
 .inputWrap input {
@@ -67,6 +72,11 @@
   font: inherit;
   min-width: 0;
   padding: 0 10px;
+}
+
+.inputWrap:focus-within {
+  border-color: rgba(26, 109, 175, 0.58);
+  box-shadow: 0 0 0 2px rgba(26, 109, 175, 0.08);
 }
 
 .inputWrap span {
@@ -86,6 +96,14 @@
   accent-color: var(--editor-accent, var(--color-tertiary));
   height: 16px;
   width: 16px;
+}
+
+.checkbox input:focus-visible,
+.range input:focus-visible,
+.resetCrop:focus-visible,
+.segmented button:focus-visible {
+  outline: 2px solid rgba(26, 109, 175, 0.58);
+  outline-offset: 2px;
 }
 
 .range input {
@@ -114,10 +132,18 @@
   padding: 10px 8px;
   position: relative;
   text-align: center;
+  transition:
+    background-color var(--motion-fast),
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast),
+    color var(--motion-fast),
+    transform var(--motion-fast);
 }
 
 .segmented button:hover {
   background: var(--editor-soft, var(--color-neutral));
+  border-color: rgba(26, 109, 175, 0.24);
+  transform: translateY(-1px);
 }
 
 .segmented button.active {
@@ -133,7 +159,15 @@
   display: inline-flex;
   height: 28px;
   justify-content: center;
+  transition:
+    background-color var(--motion-fast),
+    color var(--motion-fast),
+    transform var(--motion-fast);
   width: 28px;
+}
+
+.segmented button:hover .modeIcon {
+  transform: translateY(-1px);
 }
 
 .active .modeIcon {
@@ -153,6 +187,7 @@
   position: absolute;
   right: 8px;
   top: 8px;
+  transition: opacity var(--motion-fast);
 }
 
 .checkIcon[data-visible="true"] {
@@ -179,6 +214,7 @@
   font-size: 0.78rem;
   padding: 0;
   text-decoration: underline;
+  transition: color var(--motion-fast);
 }
 
 .resetCrop:hover {

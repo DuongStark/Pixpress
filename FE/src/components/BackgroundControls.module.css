@@ -27,6 +27,11 @@
   cursor: pointer;
   min-height: 42px;
   padding: 0 8px;
+  transition:
+    background-color var(--motion-fast),
+    box-shadow var(--motion-fast),
+    color var(--motion-fast),
+    transform var(--motion-fast);
 }
 
 .segmented button:last-child {
@@ -38,6 +43,10 @@
   background: rgba(26, 109, 175, 0.08);
   box-shadow: inset 0 0 0 2px var(--editor-accent, var(--color-tertiary));
   color: var(--editor-accent, var(--color-tertiary));
+}
+
+.segmented button:hover {
+  transform: translateY(-1px);
 }
 
 .colorRow {
@@ -58,6 +67,9 @@
   border: 1px solid var(--editor-border, var(--color-secondary));
   height: 34px;
   padding: 2px;
+  transition:
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast);
 }
 
 .toggle {
@@ -69,6 +81,14 @@
   gap: var(--space-sm);
   grid-template-columns: 1fr auto;
   padding: 10px 12px;
+  transition:
+    background-color var(--motion-fast),
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast);
+}
+
+.toggle:hover {
+  border-color: rgba(26, 109, 175, 0.36);
 }
 
 .toggle span {
@@ -93,6 +113,7 @@
   cursor: pointer;
   height: 22px;
   position: relative;
+  transition: background-color var(--motion-fast);
   width: 42px;
 }
 
@@ -117,6 +138,13 @@
 
 .toggle input:checked::after {
   transform: translateX(20px);
+}
+
+.segmented button:focus-visible,
+.colorRow input:focus-visible,
+.toggle input:focus-visible {
+  outline: 2px solid rgba(26, 109, 175, 0.58);
+  outline-offset: 2px;
 }
 
 @media (max-width: 520px) {

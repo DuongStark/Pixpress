@@ -34,6 +34,11 @@
   gap: 2px;
   min-height: 50px;
   padding: 7px 8px;
+  transition:
+    background-color var(--motion-fast),
+    box-shadow var(--motion-fast),
+    color var(--motion-fast),
+    transform var(--motion-fast);
 }
 
 .segmented button:last-child {
@@ -42,6 +47,7 @@
 
 .segmented button:hover {
   background: var(--editor-soft, var(--color-neutral));
+  transform: translateY(-1px);
 }
 
 .segmented button.active {
@@ -78,6 +84,9 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   min-height: 42px;
+  transition:
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast);
 }
 
 .inputWrap input {
@@ -86,6 +95,18 @@
   color: var(--color-primary);
   min-width: 0;
   padding: 0 10px;
+}
+
+.inputWrap:focus-within {
+  border-color: rgba(26, 109, 175, 0.58);
+  box-shadow: 0 0 0 2px rgba(26, 109, 175, 0.08);
+}
+
+.segmented button:focus-visible {
+  outline: 2px solid rgba(26, 109, 175, 0.58);
+  outline-offset: 2px;
+  position: relative;
+  z-index: 1;
 }
 
 .inputWrap span {
@@ -104,6 +125,9 @@
   line-height: 1.4;
   margin: 0;
   padding: 9px 10px;
+  transition:
+    background-color var(--motion-fast),
+    color var(--motion-fast);
 }
 
 .sizeStatus span {
