@@ -1,52 +1,27 @@
 .fieldset {
   border: 0;
   display: grid;
-  gap: var(--space-sm);
+  gap: 16px;
   margin: 0;
   padding: 0 16px 16px;
 }
 
-.fieldset legend {
-  color: var(--color-secondary);
-  font-size: 0.78rem;
-  font-weight: 500;
-  margin-bottom: var(--space-sm);
+.group {
+  display: grid;
+  gap: var(--space-sm);
 }
 
+.groupLabel,
 .inputLabel {
   color: var(--color-secondary);
-  display: grid;
   font-size: 0.78rem;
-  font-weight: 500;
-  gap: 6px;
-}
-
-.inputLabel span {
-  align-items: center;
-  display: grid;
-  grid-template-columns: 1fr auto;
-}
-
-.inputLabel input {
-  background: var(--color-neutral);
-  border: 1px solid var(--color-secondary);
-  color: var(--color-primary);
-  min-height: 42px;
-  padding: 0 10px;
-}
-
-.inputLabel strong {
-  border-bottom: 1px solid var(--color-secondary);
-  border-right: 1px solid var(--color-secondary);
-  border-top: 1px solid var(--color-secondary);
-  min-height: 42px;
-  padding: 11px 12px 0;
+  font-weight: 600;
 }
 
 .segmented {
   border: 1px solid var(--color-secondary);
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .segmented button {
@@ -57,41 +32,104 @@
   cursor: pointer;
   display: grid;
   gap: 2px;
-  min-height: 42px;
-  padding: 6px 8px;
+  min-height: 50px;
+  padding: 7px 8px;
 }
 
 .segmented button:last-child {
   border-right: 0;
 }
 
-.segmented button:hover,
+.segmented button:hover {
+  background: var(--color-neutral);
+}
+
 .segmented button.active {
-  background: var(--color-tertiary);
-  color: var(--color-on-primary);
+  background: #d8d4c8;
+  box-shadow: inset 0 0 0 2px var(--color-primary);
 }
 
 .segmented button span {
-  font-size: 0.68rem;
+  color: var(--color-secondary);
+  font-size: 0.64rem;
   opacity: 0.75;
 }
 
-.fieldset p {
+.segmented button.active span {
+  color: var(--color-primary);
+}
+
+.helper {
   color: var(--color-secondary);
+  font-size: 0.76rem;
   line-height: 1.45;
   margin: 0;
 }
 
+.inputLabel {
+  display: grid;
+  gap: 6px;
+}
+
+.inputWrap {
+  align-items: center;
+  background: var(--color-neutral);
+  border: 1px solid var(--color-secondary);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 42px;
+}
+
+.inputWrap input {
+  background: transparent;
+  border: 0;
+  color: var(--color-primary);
+  min-width: 0;
+  padding: 0 10px;
+}
+
+.inputWrap span {
+  border-left: 1px solid rgba(94, 94, 94, 0.36);
+  color: var(--color-secondary);
+  font-size: 0.72rem;
+  padding: 0 12px;
+}
+
 .sizeStatus {
+  align-items: center;
   border: 1px solid currentColor;
-  font-size: 0.76rem;
-  padding: 8px 10px;
+  display: flex;
+  font-size: 0.78rem;
+  gap: 8px;
+  line-height: 1.4;
+  margin: 0;
+  padding: 9px 10px;
+}
+
+.sizeStatus span {
+  font-weight: 800;
 }
 
 .sizeStatusOk {
+  background: rgba(22, 138, 74, 0.08);
   color: var(--color-success) !important;
 }
 
 .sizeStatusDanger {
+  background: rgba(180, 35, 24, 0.08);
   color: var(--color-danger) !important;
+}
+
+@media (max-width: 640px) {
+  .segmented {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .segmented button:nth-child(2) {
+    border-right: 0;
+  }
+
+  .segmented button:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--color-secondary);
+  }
 }

@@ -1,41 +1,55 @@
 .field {
   display: grid;
   gap: var(--space-sm);
-  padding: 0 16px 16px;
 }
 
-.field span {
+.labelRow {
   align-items: center;
   color: var(--color-secondary);
   display: flex;
   font-size: 0.78rem;
-  font-weight: 500;
+  font-weight: 600;
   justify-content: space-between;
 }
 
-.field strong {
-  color: var(--color-primary);
-  font-size: 0.92rem;
-  letter-spacing: 0;
-}
-
-.estimate {
-  background: rgba(26, 109, 175, 0.1);
-  border: 1px solid rgba(26, 109, 175, 0.35);
-  color: var(--color-primary) !important;
-  padding: 8px 10px;
-}
-
-.modeLabel {
+.labelRow strong {
   background: var(--color-neutral);
-  border: 1px solid var(--color-secondary);
-  color: var(--color-primary) !important;
-  display: inline-flex !important;
-  justify-content: center !important;
-  padding: 6px 8px;
+  border: 1px solid rgba(94, 94, 94, 0.36);
+  color: var(--color-primary);
+  font-size: 0.86rem;
+  min-width: 66px;
+  padding: 5px 8px;
+  text-align: center;
+}
+
+.labelRow strong span {
+  color: var(--color-secondary);
+  font-size: 0.68rem;
+  font-weight: 500;
+  margin-left: 3px;
 }
 
 .field input {
   accent-color: var(--color-tertiary);
   width: 100%;
+}
+
+.ticks {
+  color: var(--color-secondary);
+  display: grid;
+  font-size: 0.68rem;
+  grid-template-columns: repeat(5, 1fr);
+  opacity: 0.8;
+}
+
+.ticks span:nth-child(1) {
+  text-align: left;
+}
+
+.ticks span {
+  text-align: center;
+}
+
+.ticks span:last-child {
+  text-align: right;
 }

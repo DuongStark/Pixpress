@@ -134,10 +134,11 @@ function getDrawRect(
   options: ProcessOptions,
 ): DrawRect {
   if (options.resize.fitMode === "cover") {
-    const sx = (clamp(options.crop.x, 0, 100) / 100) * sourceWidth;
-    const sy = (clamp(options.crop.y, 0, 100) / 100) * sourceHeight;
-    const sw = (clamp(options.crop.width, 1, 100 - options.crop.x) / 100) * sourceWidth;
-    const sh = (clamp(options.crop.height, 1, 100 - options.crop.y) / 100) * sourceHeight;
+    const crop = normalizeCoverCrop(options.crop, sourceWidth, sourceHeight, targetWidth, targetHeight);
+    const sx = (crop.x / 100) * sourceWidth;
+    const sy = (crop.y / 100) * sourceHeight;
+    const sw = (crop.width / 100) * sourceWidth;
+    const sh = (crop.height / 100) * sourceHeight;
 
     return {
       sx,
@@ -170,6 +171,33 @@ function getDrawRect(
     dw,
     dh,
   };
+}
+
+function normalizeCoverCrop(
+  crop: ProcessOptions["crop"],
+  sourceWidth: number,
+  sourceHeight: number,
+  targetWidth: number,
+  targetHeight: number,
+): ProcessOptions["crop"] {
+  const x = clamp(crop.x, 0, 99);
+  const y = clamp(crop.y, 0, 99);
+  let width = clamp(crop.width, 1, 100 - x);
+  let height = clamp(crop.height, 1, 100 - y);
+  const cropRatio = (width * sourceWidth) / (height * sourceHeight);
+  const targetRatio = targetWidth / targetHeight;
+
+  if (Math.abs(cropRatio - targetRatio) < 0.001) {
+    return { x, y, width, height };
+  }
+
+  if (cropRatio > targetRatio) {
+    const nextWidth = (height * sourceHeight * targetRatio) / sourceWidth;
+    return { x: x + (width - nextWidth) / 2, y, width: nextWidth, height };
+  }
+
+  const nextHeight = (width * sourceWidth) / targetRatio / sourceHeight;
+  return { x, y: y + (height - nextHeight) / 2, width, height: nextHeight };
 }
 
 function clamp(value: number, min: number, max: number): number {

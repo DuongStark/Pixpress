@@ -174,15 +174,6 @@
   border-bottom: 0;
 }
 
-.outputGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-}
-
-.outputGrid > *:first-child {
-  border-right: 1px solid var(--color-secondary);
-}
-
 .modeTabs {
   border: 1px solid var(--color-secondary);
   display: grid;
@@ -535,20 +526,17 @@
   .actions,
   .modeSwitch,
   .optionGrid,
-  .outputGrid,
   .quickStatus {
     grid-template-columns: 1fr;
   }
 
   .modeSwitch button,
-  .outputGrid > *:first-child,
   .optionGrid .optionBlock:first-child,
   .quickStatus div {
     border-right: 0;
   }
 
   .modeSwitch button,
-  .outputGrid > *:first-child,
   .quickStatus div {
     border-bottom: 1px solid var(--color-secondary);
   }

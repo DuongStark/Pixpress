@@ -3,34 +3,40 @@ import styles from "./QualitySlider.module.css";
 
 type QualitySliderProps = {
   value: number;
-  estimatedSize?: string;
-  modeLabel?: string;
   disabled?: boolean;
   onChange: (quality: number) => void;
 };
 
-export default function QualitySlider({ value, estimatedSize, modeLabel, disabled = false, onChange }: QualitySliderProps) {
+export default function QualitySlider({ value, disabled = false, onChange }: QualitySliderProps) {
   const { language, t } = useI18n();
 
   return (
     <label className={styles.field}>
-      <span>
-        {language === "vi" ? "Chất lượng ảnh" : t.common.quality} <strong>{value}</strong>
+      <span className={styles.labelRow}>
+        <span>{language === "vi" ? "Chất lượng" : t.common.quality}</span>
+        <strong>{value}<span>/100</span></strong>
       </span>
-      {modeLabel ? <span className={styles.modeLabel}>{modeLabel}</span> : null}
-      {estimatedSize ? (
-        <span className={styles.estimate}>
-          {language === "vi" ? "Ước tính đầu ra" : "Estimated output"} <strong>{estimatedSize}</strong>
-        </span>
-      ) : null}
       <input
         disabled={disabled}
+        list="quality-marks"
         max={100}
         min={1}
         type="range"
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
       />
+      <datalist id="quality-marks">
+        <option value="60" />
+        <option value="75" />
+        <option value="90" />
+      </datalist>
+      <span className={styles.ticks} aria-hidden="true">
+        <span>1</span>
+        <span>60</span>
+        <span>75</span>
+        <span>90</span>
+        <span>100</span>
+      </span>
     </label>
   );
 }

@@ -187,15 +187,45 @@ export default function EditPage() {
   function handleWidthChange(nextWidth: number | null) {
     setWidth(nextWidth);
     if (keepAspectRatio && nextWidth && nextWidth > 0) {
-      setHeight(Math.max(1, Math.round(nextWidth / aspectRatio)));
+      const nextHeight = Math.max(1, Math.round(nextWidth / aspectRatio));
+      setHeight(nextHeight);
+      if (fitMode === "cover") {
+        setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, nextWidth, nextHeight));
+      }
+    } else if (fitMode === "cover" && nextWidth && height) {
+      setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, nextWidth, height));
     }
   }
 
   function handleHeightChange(nextHeight: number | null) {
     setHeight(nextHeight);
     if (keepAspectRatio && nextHeight && nextHeight > 0) {
-      setWidth(Math.max(1, Math.round(nextHeight * aspectRatio)));
+      const nextWidth = Math.max(1, Math.round(nextHeight * aspectRatio));
+      setWidth(nextWidth);
+      if (fitMode === "cover") {
+        setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, nextWidth, nextHeight));
+      }
+    } else if (fitMode === "cover" && width && nextHeight) {
+      setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, width, nextHeight));
     }
+  }
+
+  function handleFitModeChange(nextFitMode: FitMode) {
+    setFitMode(nextFitMode);
+
+    if (nextFitMode === "cover") {
+      setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, width || activeImage.width, height || activeImage.height));
+      return;
+    }
+
+    if (nextFitMode === "pad") {
+      if (paddingPercent === 0) setPaddingPercent(12);
+      if (backgroundMode === "transparent") setBackgroundMode("white");
+      return;
+    }
+
+    setCropRect(fullCropRect());
+    setPaddingPercent(0);
   }
 
   async function handleProcess() {
@@ -424,7 +454,7 @@ export default function EditPage() {
                       setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, width || activeImage.width, height || activeImage.height));
                     }}
                     onCenterProductChange={setCenterProduct}
-                    onFitModeChange={setFitMode}
+                    onFitModeChange={handleFitModeChange}
                     onHeightChange={handleHeightChange}
                     onKeepAspectRatioChange={setKeepAspectRatio}
                     onPaddingChange={setPaddingPercent}
@@ -450,31 +480,19 @@ export default function EditPage() {
                   </button>
                 </summary>
                 <div className={styles.stepBody}>
-                  <div className={styles.outputGrid}>
-                    <FormatSelector disabled={isProcessing} value={format} onChange={setFormat} />
-                    <QualitySlider
-                      disabled={isProcessing}
-                      estimatedSize={formatBytes(estimatedSize)}
-                      modeLabel={
-                        qualityPreset
-                          ? `${language === "vi" ? "Preset" : "Preset"}: ${qualityPreset}`
-                          : language === "vi"
-                            ? "Đang chỉnh tay"
-                            : "Manual quality"
-                      }
-                      value={quality}
-                      onChange={handleQualityChange}
-                    />
-                  </div>
+                  <FormatSelector disabled={isProcessing} value={format} onChange={setFormat} />
                   <OptimizationGoal
                     activeQualityPreset={qualityPreset}
                     disabled={isProcessing}
                     estimatedSizeBytes={estimatedSize}
                     language={language}
                     maxSizeKb={maxSizeKb}
+                    onManualQualitySelect={() => setQualityPreset(null)}
                     onMaxSizeChange={setMaxSizeKb}
                     onQualityPresetChange={handleQualityPresetChange}
-                  />
+                  >
+                    <QualitySlider disabled={isProcessing} value={quality} onChange={handleQualityChange} />
+                  </OptimizationGoal>
                 </div>
               </details>
 

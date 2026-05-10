@@ -1,8 +1,16 @@
+import { FileImage, Image, Layers, Sparkles } from "lucide-react";
 import { useI18n } from "../i18n";
 import { ImageFormat } from "../types";
 import styles from "./FormatSelector.module.css";
 
 const formats: ImageFormat[] = ["jpg", "png", "webp", "avif"];
+
+const formatIcons = {
+  jpg: FileImage,
+  png: Layers,
+  webp: Image,
+  avif: Sparkles,
+};
 
 type FormatSelectorProps = {
   value: ImageFormat;
@@ -17,21 +25,38 @@ export default function FormatSelector({ value, disabled = false, onChange }: Fo
     <fieldset className={styles.fieldset}>
       <legend>{t.controls.outputFormat}</legend>
       <div className={styles.segmented}>
-        {formats.map((format) => (
-          <button
-            key={format}
-            className={value === format ? styles.active : ""}
-            disabled={disabled}
-            title={getFormatTooltip(format, language)}
-            type="button"
-            onClick={() => onChange(format)}
-          >
-            {format.toUpperCase()}
-          </button>
-        ))}
+        {formats.map((format) => {
+          const Icon = formatIcons[format];
+
+          return (
+            <button
+              key={format}
+              className={value === format ? styles.active : ""}
+              disabled={disabled}
+              title={getFormatTooltip(format, language)}
+              type="button"
+              onClick={() => onChange(format)}
+            >
+              <Icon size={16} aria-hidden="true" />
+              <strong>{format.toUpperCase()}</strong>
+              <span>{getFormatHint(format, language)}</span>
+            </button>
+          );
+        })}
       </div>
     </fieldset>
   );
+}
+
+function getFormatHint(format: ImageFormat, language: "en" | "vi"): string {
+  const text: Record<ImageFormat, Record<"en" | "vi", string>> = {
+    jpg: { en: "Light, widely supported", vi: "Nhẹ, hỗ trợ rộng" },
+    png: { en: "Supports transparency", vi: "Có nền trong suốt" },
+    webp: { en: "Best balance", vi: "Cân bằng tốt nhất" },
+    avif: { en: "Newest, smallest", vi: "Mới, nhỏ nhất" },
+  };
+
+  return text[format][language];
 }
 
 function getFormatTooltip(format: ImageFormat, language: "en" | "vi"): string {
