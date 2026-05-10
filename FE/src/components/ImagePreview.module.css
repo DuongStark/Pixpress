@@ -2,8 +2,8 @@
   align-content: start;
   align-self: start;
   animation: panelIn 220ms ease-out;
-  background: #f6f3ea;
-  border: 1px solid var(--color-secondary);
+  background: var(--editor-surface, #f6f3ea);
+  border: 1px solid var(--editor-border, var(--color-secondary));
   border-radius: 6px;
   box-shadow: 0 10px 28px rgba(19, 19, 19, 0.08);
   display: grid;
@@ -14,9 +14,9 @@
 
 .previewHeader {
   align-items: center;
-  background: rgba(244, 241, 232, 0.92);
-  border-bottom: 1px solid rgba(94, 94, 94, 0.24);
-  color: var(--color-secondary);
+  background: var(--editor-soft, rgba(244, 241, 232, 0.92));
+  border-bottom: 1px solid var(--editor-border, rgba(94, 94, 94, 0.24));
+  color: var(--editor-muted, var(--color-secondary));
   display: flex;
   font-size: 0.82rem;
   justify-content: space-between;
@@ -55,7 +55,7 @@
 }
 
 .previewToggle button[aria-checked="true"] {
-  background: var(--color-primary);
+  background: var(--editor-accent, var(--color-primary));
   border-radius: 999px;
   color: var(--color-on-primary);
 }
@@ -304,10 +304,10 @@
 }
 
 .metaGrid dt {
-  color: var(--color-secondary);
+  color: var(--editor-muted, var(--color-secondary));
   font-size: 0.7rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .metaGrid dd {

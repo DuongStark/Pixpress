@@ -20,7 +20,7 @@ export default function QualitySlider({ value, disabled = false, onChange }: Qua
         disabled={disabled}
         list="quality-marks"
         max={100}
-        min={1}
+        min={10}
         type="range"
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
@@ -31,7 +31,7 @@ export default function QualitySlider({ value, disabled = false, onChange }: Qua
         <option value="90" />
       </datalist>
       <span className={styles.ticks} aria-hidden="true">
-        <span>1</span>
+        <span>10</span>
         <span>60</span>
         <span>75</span>
         <span>90</span>

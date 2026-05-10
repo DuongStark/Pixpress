@@ -7,14 +7,14 @@
 }
 
 .fieldset legend {
-  color: var(--color-secondary);
+  color: var(--editor-muted, var(--color-secondary));
   font-size: 0.78rem;
   font-weight: 500;
   margin-bottom: var(--space-sm);
 }
 
 .segmented {
-  border: 1px solid var(--color-secondary);
+  border: 1px solid var(--editor-border, var(--color-secondary));
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
@@ -22,7 +22,7 @@
 .segmented button {
   background: transparent;
   border: 0;
-  border-right: 1px solid var(--color-secondary);
+  border-right: 1px solid var(--editor-border, var(--color-secondary));
   color: var(--color-primary);
   cursor: pointer;
   min-height: 42px;
@@ -35,12 +35,13 @@
 
 .segmented button:hover,
 .segmented button.active {
-  background: var(--color-tertiary);
-  color: var(--color-on-primary);
+  background: rgba(26, 109, 175, 0.08);
+  box-shadow: inset 0 0 0 2px var(--editor-accent, var(--color-tertiary));
+  color: var(--editor-accent, var(--color-tertiary));
 }
 
 .colorRow {
-  color: var(--color-secondary);
+  color: var(--editor-muted, var(--color-secondary));
   display: grid;
   font-size: 0.78rem;
   font-weight: 500;
@@ -54,14 +55,15 @@
 
 .colorRow input {
   background: transparent;
-  border: 1px solid var(--color-secondary);
+  border: 1px solid var(--editor-border, var(--color-secondary));
   height: 34px;
   padding: 2px;
 }
 
 .toggle {
   align-items: center;
-  border: 1px solid var(--color-secondary);
+  background: var(--editor-soft, transparent);
+  border: 1px solid var(--editor-border, var(--color-secondary));
   color: var(--color-primary);
   display: grid;
   gap: var(--space-sm);
@@ -79,15 +81,42 @@
 }
 
 .toggle small {
-  color: var(--color-secondary);
+  color: var(--editor-muted, var(--color-secondary));
   font-size: 0.72rem;
   letter-spacing: 0;
 }
 
 .toggle input {
-  accent-color: var(--color-tertiary);
-  height: 20px;
-  width: 20px;
+  appearance: none;
+  background: #d8d4c8;
+  border-radius: 999px;
+  cursor: pointer;
+  height: 22px;
+  position: relative;
+  width: 42px;
+}
+
+.toggle input::after {
+  background: #ffffff;
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(19, 19, 19, 0.24);
+  content: "";
+  height: 18px;
+  left: 2px;
+  position: absolute;
+  top: 2px;
+  transition:
+    background-color var(--motion-fast),
+    transform var(--motion-fast);
+  width: 18px;
+}
+
+.toggle input:checked {
+  background: var(--editor-accent, var(--color-tertiary));
+}
+
+.toggle input:checked::after {
+  transform: translateX(20px);
 }
 
 @media (max-width: 520px) {

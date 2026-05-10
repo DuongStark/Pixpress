@@ -35,7 +35,7 @@ export default function EditPage() {
   const initialPreset = platformPresets[0];
   const [selectedPreset, setSelectedPreset] = useState<PlatformPreset>(initialPreset);
   const [format, setFormat] = useState<ImageFormat>(initialPreset.format);
-  const [quality, setQuality] = useState(initialPreset.quality);
+  const [quality, setQuality] = useState(Math.max(10, initialPreset.quality));
   const [qualityPreset, setQualityPreset] = useState<OptimizationPriority | null>(initialPreset.priority);
   const [width, setWidth] = useState<number | null>(image?.width || null);
   const [height, setHeight] = useState<number | null>(image?.height || null);
@@ -173,14 +173,14 @@ export default function EditPage() {
   }
 
   function handleQualityChange(nextQuality: number) {
-    setQuality(nextQuality);
+    setQuality(Math.max(10, nextQuality));
     setQualityPreset(null);
     setPriority("smallest");
   }
 
   function handleQualityPresetChange(nextPriority: OptimizationPriority, nextQuality: number) {
     setPriority(nextPriority);
-    setQuality(nextQuality);
+    setQuality(Math.max(10, nextQuality));
     setQualityPreset(nextPriority);
   }
 
@@ -292,13 +292,15 @@ export default function EditPage() {
   }
 
   const canProcess = editMode === "platform" ? selectedPlatformIds.length > 0 : !dimensionsInvalid;
+  const editTitle =
+    editMode === "custom" ? (language === "vi" ? "Tùy chỉnh ảnh xuất" : "Customize export image") : t.edit.title;
 
   return (
     <section className="pageStack">
       <div className={`pageHeader ${styles.compactHeader}`}>
         <div>
           <span className="eyebrow">{t.edit.eyebrow}</span>
-          <h1>{t.edit.title}</h1>
+          <h1>{editTitle}</h1>
         </div>
       </div>
 
@@ -423,7 +425,7 @@ export default function EditPage() {
             </div>
           </div>
 
-          <aside className={styles.panel}>
+          <aside className={`${styles.panel} ${styles.customPanel}`}>
             <div className={styles.stepList}>
               <details className={styles.step} open>
                 <summary className={styles.stepHeader}>

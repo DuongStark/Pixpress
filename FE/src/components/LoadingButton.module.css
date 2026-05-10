@@ -1,7 +1,7 @@
 .button {
   align-items: center;
-  background: var(--color-primary);
-  border: 1px solid var(--color-primary);
+  background: var(--editor-accent, var(--color-primary));
+  border: 1px solid var(--editor-accent, var(--color-primary));
   color: var(--color-on-primary);
   cursor: pointer;
   display: inline-flex;
@@ -19,8 +19,8 @@
 }
 
 .button:hover:not(:disabled) {
-  background: var(--color-tertiary);
-  border-color: var(--color-tertiary);
+  background: var(--editor-accent-hover, var(--color-tertiary));
+  border-color: var(--editor-accent-hover, var(--color-tertiary));
   transform: translateY(-1px);
 }
 
