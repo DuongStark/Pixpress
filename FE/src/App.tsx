@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import AppFooter from "./components/AppFooter";
 import AppHeader from "./components/AppHeader";
 import EditPage from "./pages/EditPage";
@@ -20,6 +21,7 @@ export default function App() {
         </Routes>
       </main>
       <AppFooter />
+      <SpeedInsights />
     </div>
   );
 }
