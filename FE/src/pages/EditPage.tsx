@@ -161,6 +161,25 @@ export default function EditPage() {
     return getDefaultCropRect(activeImage.width, activeImage.height, preset.width, preset.height);
   }, [editMode, activeImage, hoveredPlatformId, selectedPlatformIds, ecommercePresets]);
 
+  const platformEstimates = useMemo(() => {
+    if (!activeImage) return new Map<string, number>();
+    const map = new Map<string, number>();
+    for (const preset of ecommercePresets) {
+      const options: ProcessOptions = {
+        format: preset.format,
+        quality: preset.quality,
+        resize: { width: preset.width, height: preset.height, keepAspectRatio: true, fitMode: preset.fitMode },
+        crop: getDefaultCropRect(activeImage.width, activeImage.height, preset.width, preset.height),
+        removeBackground: preset.removeBackground,
+        goal: { maxSizeKb: preset.maxSizeKb, priority: preset.priority },
+        background: { mode: preset.backgroundMode, color: "#ffffff", paddingPercent: preset.paddingPercent, centerProduct: true, softShadow: false },
+        preset: { id: preset.id, name: preset.name.en },
+      };
+      map.set(preset.id, estimateResultSize(activeImage, options, preset.width, preset.height));
+    }
+    return map;
+  }, [activeImage, ecommercePresets]);
+
   function togglePlatform(id: string) {
     if (selectedPlatformIds.includes(id)) {
       if (selectedPlatformIds.length === 1) return;
@@ -341,6 +360,9 @@ export default function EditPage() {
             <div className={styles.platformGrid}>
               {ecommercePresets.map((preset) => {
                 const selected = selectedPlatformIds.includes(preset.id);
+                const estimatedBytes = platformEstimates.get(preset.id) ?? 0;
+                const estimatedKb = Math.round(estimatedBytes / 1024);
+                const withinLimit = estimatedKb <= preset.maxSizeKb;
                 return (
                   <button
                     key={preset.id}
@@ -358,6 +380,9 @@ export default function EditPage() {
                     </span>
                     <span className={styles.platformCardBg}>
                       {language === "vi" ? "Ảnh vuông · Nền trắng" : "Square crop · White background"}
+                    </span>
+                    <span className={withinLimit ? styles.platformCardEstimateOk : styles.platformCardEstimateWarn}>
+                      ~{estimatedKb}KB {withinLimit ? "✓" : "⚠"}
                     </span>
                   </button>
                 );

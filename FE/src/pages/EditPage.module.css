@@ -312,7 +312,8 @@
   grid-template-areas:
     "check name"
     "check spec"
-    "check bg";
+    "check bg"
+    "check estimate";
   grid-template-columns: 18px minmax(0, 1fr);
   row-gap: 2px;
   padding: 14px 16px;
@@ -396,6 +397,20 @@
   font-size: 0.72rem;
   grid-area: bg;
   opacity: 0.8;
+}
+
+.platformCardEstimateOk {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #16a34a;
+  grid-area: estimate;
+}
+
+.platformCardEstimateWarn {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #ea580c;
+  grid-area: estimate;
 }
 
 .comingSoonNote {
