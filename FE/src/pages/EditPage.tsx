@@ -444,6 +444,8 @@ export default function EditPage() {
                     keepAspectRatio={keepAspectRatio}
                     paddingPercent={paddingPercent}
                     centerProduct={centerProduct}
+                    originalWidth={activeImage.width}
+                    originalHeight={activeImage.height}
                     width={width}
                     onCropReset={() => {
                       setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, width || activeImage.width, height || activeImage.height));

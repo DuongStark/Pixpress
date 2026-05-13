@@ -8,6 +8,8 @@ type ResizeControlsProps = {
   keepAspectRatio: boolean;
   paddingPercent: number;
   centerProduct: boolean;
+  originalWidth?: number;
+  originalHeight?: number;
   disabled?: boolean;
   onWidthChange: (width: number | null) => void;
   onHeightChange: (height: number | null) => void;
@@ -17,12 +19,22 @@ type ResizeControlsProps = {
   onCropReset: () => void;
 };
 
+const RATIO_PRESETS = [
+  { label: "1:1", w: 1, h: 1 },
+  { label: "4:3", w: 4, h: 3 },
+  { label: "3:4", w: 3, h: 4 },
+  { label: "16:9", w: 16, h: 9 },
+  { label: "9:16", w: 9, h: 16 },
+] as const;
+
 export default function ResizeControls({
   width,
   height,
   keepAspectRatio,
   paddingPercent,
   centerProduct,
+  originalWidth,
+  originalHeight,
   disabled = false,
   onWidthChange,
   onHeightChange,
@@ -33,8 +45,64 @@ export default function ResizeControls({
 }: ResizeControlsProps) {
   const { language, t } = useI18n();
 
+  const currentRatio = width && height ? width / height : null;
+
+  function applyRatio(rw: number, rh: number) {
+    const baseWidth = width || 1080;
+    const newHeight = Math.round(baseWidth * (rh / rw));
+    onWidthChange(baseWidth);
+    onHeightChange(newHeight);
+    onKeepAspectRatioChange(true);
+  }
+
+  function applyOriginalRatio() {
+    if (!originalWidth || !originalHeight) return;
+    onWidthChange(originalWidth);
+    onHeightChange(originalHeight);
+    onKeepAspectRatioChange(true);
+  }
+
+  function isActiveRatio(rw: number, rh: number): boolean {
+    if (!currentRatio) return false;
+    const target = rw / rh;
+    return Math.abs(currentRatio - target) < 0.01;
+  }
+
+  const isOriginalActive = originalWidth && originalHeight && currentRatio
+    ? Math.abs(currentRatio - originalWidth / originalHeight) < 0.01
+    : false;
+
   return (
     <fieldset className={styles.fieldset}>
+      <div className={styles.controlBlock}>
+        <div className={styles.blockHeader}>
+          <span>{language === "vi" ? "Tỉ lệ khung hình" : "Aspect ratio"}</span>
+        </div>
+        <div className={styles.ratioRow}>
+          {originalWidth && originalHeight ? (
+            <button
+              className={`${styles.ratioBtn} ${isOriginalActive ? styles.ratioBtnActive : ""}`}
+              disabled={disabled}
+              type="button"
+              onClick={applyOriginalRatio}
+            >
+              {language === "vi" ? "Gốc" : "Original"}
+            </button>
+          ) : null}
+          {RATIO_PRESETS.map((preset) => (
+            <button
+              key={preset.label}
+              className={`${styles.ratioBtn} ${isActiveRatio(preset.w, preset.h) ? styles.ratioBtnActive : ""}`}
+              disabled={disabled}
+              type="button"
+              onClick={() => applyRatio(preset.w, preset.h)}
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className={styles.controlBlock}>
         <div className={styles.blockHeader}>
           <span>{language === "vi" ? "Kích thước ảnh" : "Image size"}</span>

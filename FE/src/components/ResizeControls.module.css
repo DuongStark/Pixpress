@@ -206,6 +206,39 @@
   justify-content: flex-start;
 }
 
+.ratioRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ratioBtn {
+  background: var(--editor-soft, var(--color-neutral));
+  border: 1px solid var(--editor-border, rgba(94, 94, 94, 0.36));
+  color: var(--color-secondary);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 5px 10px;
+  transition:
+    background-color var(--motion-fast),
+    border-color var(--motion-fast),
+    color var(--motion-fast);
+}
+
+.ratioBtn:hover {
+  background: rgba(26, 109, 175, 0.06);
+  border-color: rgba(26, 109, 175, 0.3);
+  color: var(--color-primary);
+}
+
+.ratioBtnActive {
+  background: rgba(26, 109, 175, 0.1);
+  border-color: var(--editor-accent, var(--color-primary));
+  color: var(--editor-accent, var(--color-primary));
+  font-weight: 600;
+}
+
 .resetCrop {
   background: transparent;
   border: 0;
