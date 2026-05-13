@@ -38,7 +38,7 @@ export default function EditPage() {
   const image = useMemo(() => getActiveImage(), []);
 
   const [editMode, setEditMode] = useState<EditMode>("platform");
-  const [selectedPlatformIds, setSelectedPlatformIds] = useState(ecommercePresetIds);
+  const [selectedPlatformIds, setSelectedPlatformIds] = useState<string[]>([]);
 
   const initialPreset = platformPresets[0];
   const [selectedPreset, setSelectedPreset] = useState<PlatformPreset>(initialPreset);
@@ -63,6 +63,7 @@ export default function EditPage() {
   const [livePreview, setLivePreview] = useState<{ url: string; width: number; height: number } | null>(null);
   const [isRenderingPreview, setIsRenderingPreview] = useState(false);
   const [hoveredPlatformId, setHoveredPlatformId] = useState<string | null>(null);
+  const [platformCropRects, setPlatformCropRects] = useState<Record<string, ProcessOptions["crop"]>>({});
   const livePreviewUrlRef = useRef<string | null>(null);
   const dimensionsInvalid = isInvalidDimension(width) || isInvalidDimension(height);
 
@@ -153,13 +154,20 @@ export default function EditPage() {
 
   const ecommercePresets = platformPresets.filter((p) => ecommercePresetIds.includes(p.id));
 
+  const activePlatformId = hoveredPlatformId ?? selectedPlatformIds[0];
+
   const platformCropRect = useMemo(() => {
     if (editMode !== "platform" || !activeImage) return null;
-    const targetId = hoveredPlatformId ?? selectedPlatformIds[0];
-    const preset = ecommercePresets.find((p) => p.id === targetId);
+    const preset = ecommercePresets.find((p) => p.id === activePlatformId);
     if (!preset) return null;
-    return getDefaultCropRect(activeImage.width, activeImage.height, preset.width, preset.height);
-  }, [editMode, activeImage, hoveredPlatformId, selectedPlatformIds, ecommercePresets]);
+    // Use saved crop if exists, otherwise compute default
+    return platformCropRects[activePlatformId] ?? getDefaultCropRect(activeImage.width, activeImage.height, preset.width, preset.height);
+  }, [editMode, activeImage, activePlatformId, platformCropRects, ecommercePresets]);
+
+  function handlePlatformCropChange(crop: ProcessOptions["crop"]) {
+    if (!activePlatformId) return;
+    setPlatformCropRects((prev) => ({ ...prev, [activePlatformId]: crop }));
+  }
 
   const platformEstimates = useMemo(() => {
     if (!activeImage) return new Map<string, number>();
@@ -340,7 +348,20 @@ export default function EditPage() {
       {editMode === "platform" ? (
         <div className={styles.editorGrid}>
           <div className={styles.previewColumn}>
-            <ImagePreview image={activeImage} readOnlyCrop={platformCropRect} />
+            <ImagePreview
+              image={activeImage}
+              cropOptions={platformCropRect ? {
+                resize: {
+                  width: ecommercePresets.find(p => p.id === activePlatformId)?.width ?? activeImage.width,
+                  height: ecommercePresets.find(p => p.id === activePlatformId)?.height ?? activeImage.height,
+                  keepAspectRatio: true,
+                  fitMode: "cover",
+                },
+                crop: platformCropRect,
+              } : undefined}
+              lockAspectRatio={true}
+              onCropChange={handlePlatformCropChange}
+            />
             <div className={styles.previewNote}>
               <Sparkles size={14} aria-hidden="true" />
               <span>{t.edit.platformNote}</span>
@@ -371,7 +392,6 @@ export default function EditPage() {
                     type="button"
                     onClick={() => togglePlatform(preset.id)}
                     onMouseEnter={() => setHoveredPlatformId(preset.id)}
-                    onMouseLeave={() => setHoveredPlatformId(null)}
                   >
                     <span className={styles.platformCardCheck} aria-hidden="true" />
                     <strong className={styles.platformCardName}>{preset.name[language]}</strong>
