@@ -56,7 +56,6 @@ export default function EditPage() {
   const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>(initialPreset.backgroundMode);
   const [backgroundColor, setBackgroundColor] = useState("#ffffff");
   const [paddingPercent, setPaddingPercent] = useState(initialPreset.paddingPercent);
-  const [centerProduct, setCenterProduct] = useState(true);
   const [softShadow, setSoftShadow] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processError, setProcessError] = useState<string | null>(null);
@@ -124,7 +123,6 @@ export default function EditPage() {
     backgroundMode,
     backgroundColor,
     paddingPercent,
-    centerProduct,
     softShadow,
     selectedPreset,
     language,
@@ -209,7 +207,6 @@ export default function EditPage() {
     setPriority(preset.priority);
     setBackgroundMode(preset.backgroundMode);
     setPaddingPercent(preset.paddingPercent);
-    setCenterProduct(preset.paddingPercent > 0);
     setSoftShadow(false);
   }
 
@@ -223,6 +220,12 @@ export default function EditPage() {
     setPriority(nextPriority);
     setQuality(Math.max(10, nextQuality));
     setQualityPreset(nextPriority);
+  }
+
+  function handleBothChange(nextWidth: number, nextHeight: number) {
+    setWidth(nextWidth);
+    setHeight(nextHeight);
+    setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, nextWidth, nextHeight));
   }
 
   function handleWidthChange(nextWidth: number | null) {
@@ -278,7 +281,7 @@ export default function EditPage() {
       crop: { x: cropRect.x, y: cropRect.y, width: cropRect.width, height: cropRect.height },
       removeBackground: false,
       goal: { maxSizeKb, priority },
-      background: { mode: backgroundMode, color: backgroundColor, paddingPercent, centerProduct, softShadow },
+      background: { mode: backgroundMode, color: backgroundColor, paddingPercent, centerProduct: true, softShadow },
       preset:
         editMode === "custom"
           ? { id: "custom", name: language === "vi" ? "Tự chỉnh" : "Custom" }
@@ -292,7 +295,6 @@ export default function EditPage() {
     setKeepAspectRatio(true);
     setCropRect(fullCropRect());
     setPaddingPercent(0);
-    setCenterProduct(true);
   }
 
   function resetOutput() {
@@ -488,15 +490,14 @@ export default function EditPage() {
                     height={height}
                     keepAspectRatio={keepAspectRatio}
                     paddingPercent={paddingPercent}
-                    centerProduct={centerProduct}
                     originalWidth={activeImage.width}
                     originalHeight={activeImage.height}
                     width={width}
                     onCropReset={() => {
                       setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, width || activeImage.width, height || activeImage.height));
                     }}
-                    onCenterProductChange={setCenterProduct}
                     onHeightChange={handleHeightChange}
+                    onBothChange={handleBothChange}
                     onKeepAspectRatioChange={setKeepAspectRatio}
                     onPaddingChange={setPaddingPercent}
                     onWidthChange={handleWidthChange}

@@ -1,4 +1,4 @@
-import { Lock, Scan } from "lucide-react";
+import { Lock } from "lucide-react";
 import { useI18n } from "../i18n";
 import styles from "./ResizeControls.module.css";
 
@@ -7,15 +7,15 @@ type ResizeControlsProps = {
   height: number | null;
   keepAspectRatio: boolean;
   paddingPercent: number;
-  centerProduct: boolean;
+
   originalWidth?: number;
   originalHeight?: number;
   disabled?: boolean;
   onWidthChange: (width: number | null) => void;
   onHeightChange: (height: number | null) => void;
+  onBothChange: (width: number, height: number) => void;
   onKeepAspectRatioChange: (value: boolean) => void;
   onPaddingChange: (value: number) => void;
-  onCenterProductChange: (value: boolean) => void;
   onCropReset: () => void;
 };
 
@@ -32,15 +32,14 @@ export default function ResizeControls({
   height,
   keepAspectRatio,
   paddingPercent,
-  centerProduct,
   originalWidth,
   originalHeight,
   disabled = false,
   onWidthChange,
   onHeightChange,
+  onBothChange,
   onKeepAspectRatioChange,
   onPaddingChange,
-  onCenterProductChange,
   onCropReset,
 }: ResizeControlsProps) {
   const { language, t } = useI18n();
@@ -50,16 +49,12 @@ export default function ResizeControls({
   function applyRatio(rw: number, rh: number) {
     const baseWidth = width || 1080;
     const newHeight = Math.round(baseWidth * (rh / rw));
-    onWidthChange(baseWidth);
-    onHeightChange(newHeight);
-    onKeepAspectRatioChange(true);
+    onBothChange(baseWidth, newHeight);
   }
 
   function applyOriginalRatio() {
     if (!originalWidth || !originalHeight) return;
-    onWidthChange(originalWidth);
-    onHeightChange(originalHeight);
-    onKeepAspectRatioChange(true);
+    onBothChange(originalWidth, originalHeight);
   }
 
   function isActiveRatio(rw: number, rh: number): boolean {
@@ -163,16 +158,7 @@ export default function ResizeControls({
             onChange={(event) => onPaddingChange(Number(event.target.value))}
           />
         </label>
-        <label className={styles.checkbox}>
-          <input
-            checked={centerProduct}
-            disabled={disabled}
-            type="checkbox"
-            onChange={(event) => onCenterProductChange(event.target.checked)}
-          />
-          <Scan size={16} aria-hidden="true" />
-          {language === "vi" ? "Căn giữa sản phẩm" : "Center product"}
-        </label>
+
       </div>
 
       <div className={styles.controlBlock}>
