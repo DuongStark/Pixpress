@@ -153,10 +153,16 @@ export default function ExportPage() {
       <section className={styles.variantsPanel}>
         <div className={styles.panelHeader}>
           <span>{language === "vi" ? "Ảnh theo từng sàn" : "Images by platform"}</span>
-          <span>{language === "vi" ? "Kiểm tra yêu cầu cơ bản" : "Basic requirements check"}</span>
+          <span>
+            {language === "vi" ? "Tổng giảm" : "Total saved"}: {formatBytes(currentExport.variants.reduce((sum, v) => sum + Math.max(0, currentExport.original.size - v.result.size), 0))}
+            {" "}{language === "vi" ? `cho ${currentExport.variants.length} sàn` : `across ${currentExport.variants.length} platforms`}
+          </span>
         </div>
         <div className={styles.variantGrid}>
-          {currentExport.variants.map((variant) => (
+          {currentExport.variants.map((variant) => {
+            const savedBytes = currentExport.original.size - variant.result.size;
+            const savedPct = Math.round((savedBytes / currentExport.original.size) * 100);
+            return (
             <article className={styles.variantCard} key={variant.variantId}>
               <div className={styles.variantImage}>
                 <img src={variant.result.previewUrl} alt={variant.result.fileName} />
@@ -185,6 +191,13 @@ export default function ExportPage() {
                     <dt>{language === "vi" ? "Format" : "Format"}</dt>
                     <dd>{variant.result.format.toUpperCase()}</dd>
                   </div>
+                  <div>
+                    <dt>{language === "vi" ? "So sánh" : "Savings"}</dt>
+                    <dd className={savedBytes > 0 ? styles.savingsGood : styles.savingsNeutral}>
+                      {formatBytes(currentExport.original.size)} → {formatBytes(variant.result.size)}
+                      {savedBytes > 0 ? ` (-${savedPct}%)` : ""}
+                    </dd>
+                  </div>
                 </dl>
                 <ul className={styles.checkList}>
                   {variant.compliance.checks.map((check) => (
@@ -206,7 +219,8 @@ export default function ExportPage() {
                 </div>
               </div>
             </article>
-          ))}
+          );
+          })}
         </div>
       </section>
 

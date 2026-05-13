@@ -188,6 +188,15 @@
   overflow-wrap: anywhere;
 }
 
+.savingsGood {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.savingsNeutral {
+  color: var(--color-secondary);
+}
+
 .checkList {
   display: grid;
   gap: var(--space-sm);

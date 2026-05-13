@@ -99,6 +99,50 @@
   text-transform: uppercase;
 }
 
+.sizeLabel {
+  color: var(--color-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 6px 12px;
+  text-align: center;
+}
+
+.sizeLabelGood {
+  color: #16a34a;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  text-align: center;
+}
+
+.sizeLabelMild {
+  color: #ea580c;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  text-align: center;
+}
+
+.savingsBadgeGood {
+  background: rgba(22, 163, 74, 0.08);
+  border-bottom: 1px solid rgba(22, 163, 74, 0.2);
+  color: #16a34a;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.savingsBadgeMild {
+  background: rgba(234, 88, 12, 0.06);
+  border-bottom: 1px solid rgba(234, 88, 12, 0.2);
+  color: #ea580c;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  text-align: center;
+}
+
 .imageFrame img {
   animation: imageReveal 180ms ease-out;
   height: 100%;

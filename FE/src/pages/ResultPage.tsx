@@ -3,6 +3,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import ErrorAlert from "../components/ErrorAlert";
 import ResultSummary from "../components/ResultSummary";
 import { useI18n } from "../i18n";
+import { formatBytes } from "../lib/format";
 import { getJob } from "../lib/sessionStore";
 import styles from "./ResultPage.module.css";
 
@@ -35,6 +36,8 @@ export default function ResultPage() {
   }
 
   const reachedGoal = job.result.size <= (job.options.goal?.maxSizeKb ?? Number.POSITIVE_INFINITY) * 1024;
+  const savedBytes = job.original.size - job.result.size;
+  const savedPercent = Math.round((savedBytes / job.original.size) * 100);
 
   return (
     <section className="pageStack">
@@ -63,18 +66,27 @@ export default function ResultPage() {
             <span>{language === "vi" ? "So sánh trước / sau" : "Before / after"}</span>
             <span>{reachedGoal ? (language === "vi" ? "Ảnh đã sẵn đăng" : "Ready to publish") : language === "vi" ? "Cần giảm dung lượng" : "File size needs adjustment"}</span>
           </div>
+          {savedBytes > 0 ? (
+            <div className={savedPercent >= 50 ? styles.savingsBadgeGood : styles.savingsBadgeMild}>
+              {language === "vi" ? "Đã giảm" : "Saved"} {formatBytes(savedBytes)} ({savedPercent}%)
+            </div>
+          ) : null}
           <div className={styles.beforeAfterGrid}>
             <figure className={styles.compareFrame}>
               <figcaption>{language === "vi" ? "Ảnh gốc" : "Before"}</figcaption>
               <div className={styles.imageFrame}>
                 <img src={job.original.previewUrl} alt={job.original.originalName} />
               </div>
+              <span className={styles.sizeLabel}>{formatBytes(job.original.size)}</span>
             </figure>
             <figure className={styles.compareFrame}>
               <figcaption>{language === "vi" ? "Kết quả" : "After"}</figcaption>
               <div className={styles.imageFrame}>
                 <img src={job.result.previewUrl} alt={job.result.fileName} />
               </div>
+              <span className={savedPercent >= 50 ? styles.sizeLabelGood : savedPercent >= 20 ? styles.sizeLabelMild : styles.sizeLabel}>
+                {formatBytes(job.result.size)} {savedBytes > 0 ? `(-${savedPercent}%)` : ""}
+              </span>
             </figure>
           </div>
         </section>
