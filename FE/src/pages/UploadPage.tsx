@@ -68,6 +68,7 @@ export default function UploadPage() {
         <div>
           <span className="eyebrow">{t.upload.eyebrow}</span>
           <h1>{t.upload.title}</h1>
+          <p className={styles.tagline}>{t.upload.tagline}</p>
           <p>{t.upload.description}</p>
         </div>
         <div className="threadMeta" aria-label={t.upload.uploadStatus}>
@@ -92,6 +93,16 @@ export default function UploadPage() {
           onFileSelected={handleFileSelected}
           onRemove={handleRemove}
         />
+        <div className={styles.dropzoneHints}>
+          <span className={styles.hintText}>
+            {t.dropzone.supports}
+          </span>
+          <div className={styles.platformBadges}>
+            <span>Shopee</span>
+            <span>TikTok</span>
+            <span>Instagram</span>
+          </div>
+        </div>
 
         <aside className={styles.queuePanel}>
           <div className={styles.panelHeader}>

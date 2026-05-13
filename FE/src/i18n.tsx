@@ -35,6 +35,7 @@ const dictionaries = {
     upload: {
       eyebrow: "Step 01 / Input",
       title: "Prepare images for marketplaces, social posts, and websites",
+      tagline: "Resize, convert and optimize images for Shopee, TikTok, Instagram and more — free, instant, no upload needed.",
       description:
         "Upload an image, choose where it will be published, and Pixpress will prepare the size, format, file weight, and background.",
       uploadStatus: "Upload status",
@@ -182,6 +183,7 @@ const dictionaries = {
     upload: {
       eyebrow: "Bước 1 — Tải ảnh",
       title: "Chuẩn bị ảnh sẵn sàng đăng bán",
+      tagline: "Resize, chuyển đổi và tối ưu ảnh cho Shopee, TikTok, Instagram — miễn phí, tức thì, xử lý ngay trên trình duyệt.",
       description:
         "Tải ảnh lên, chọn nơi đăng, Pixpress sẽ chuẩn hóa kích thước, định dạng, dung lượng và nền ảnh.",
       uploadStatus: "Thông tin ảnh",
