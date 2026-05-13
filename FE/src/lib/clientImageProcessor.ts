@@ -5,6 +5,7 @@ export type ClientProcessResult = {
   blob: Blob;
   fileName: string;
   format: ImageFormat;
+  formatFallback?: boolean; // true if browser didn't support requested format, fell back to jpg
   mimeType: string;
   size: number;
   width: number;
@@ -60,16 +61,18 @@ export async function processImageOnClient(image: UploadedImage, options: Proces
     const rect = getDrawRect(bitmap.width, bitmap.height, targetWidth, targetHeight, options);
     context.drawImage(bitmap, rect.sx, rect.sy, rect.sw, rect.sh, rect.dx, rect.dy, rect.dw, rect.dh);
 
-    const blob = await encodeCanvas(canvas, options);
+    const { blob, fallback: formatFallback } = await encodeCanvas(canvas, options);
     const baseName = image.originalName.replace(/\.[^.]+$/, "") || "image";
-    const fileName = `${baseName}-pixpress.${options.format}`;
+    const actualFormat: ImageFormat = formatFallback ? "jpg" : options.format;
+    const fileName = `${baseName}-pixpress.${actualFormat}`;
     const previewUrl = URL.createObjectURL(blob);
 
     return {
       blob,
       fileName,
-      format: options.format,
-      mimeType: blob.type || imageMimeType(options.format),
+      format: actualFormat,
+      formatFallback,
+      mimeType: blob.type || imageMimeType(actualFormat),
       size: blob.size,
       width: targetWidth,
       height: targetHeight,
@@ -181,7 +184,7 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-async function encodeCanvas(canvas: HTMLCanvasElement, options: ProcessOptions): Promise<Blob> {
+async function encodeCanvas(canvas: HTMLCanvasElement, options: ProcessOptions): Promise<{ blob: Blob; fallback: boolean }> {
   const mimeType = imageMimeType(options.format);
   const targetBytes = options.goal.maxSizeKb > 0 ? options.goal.maxSizeKb * 1024 : null;
 
@@ -191,14 +194,14 @@ async function encodeCanvas(canvas: HTMLCanvasElement, options: ProcessOptions):
 
   const minQuality = getMinQuality(options.goal.priority);
   let quality = Math.min(Math.max(options.quality, minQuality), 100);
-  let bestBlob = await canvasToBlob(canvas, mimeType, quality / 100);
+  let best = await canvasToBlob(canvas, mimeType, quality / 100);
 
-  while (bestBlob.size > targetBytes && quality > minQuality) {
+  while (best.blob.size > targetBytes && quality > minQuality) {
     quality = Math.max(minQuality, quality - 8);
-    bestBlob = await canvasToBlob(canvas, mimeType, quality / 100);
+    best = await canvasToBlob(canvas, mimeType, quality / 100);
   }
 
-  return bestBlob;
+  return best;
 }
 
 function getMinQuality(priority: ProcessOptions["goal"]["priority"]): number {
@@ -207,21 +210,33 @@ function getMinQuality(priority: ProcessOptions["goal"]["priority"]): number {
   return 60;
 }
 
-function canvasToBlob(canvas: HTMLCanvasElement, mimeType: string, quality: number): Promise<Blob> {
+function canvasToBlob(canvas: HTMLCanvasElement, mimeType: string, quality: number): Promise<{ blob: Blob; fallback: boolean }> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
         if (!blob) {
-          reject(new Error("Browser could not encode this image format."));
+          canvas.toBlob(
+            (fallbackBlob) => {
+              if (!fallbackBlob) { reject(new Error("Browser could not encode this image.")); return; }
+              resolve({ blob: fallbackBlob, fallback: true });
+            },
+            "image/jpeg",
+            quality,
+          );
           return;
         }
-
         if (mimeType !== "image/png" && blob.type && blob.type !== mimeType) {
-          reject(new Error("Browser does not support this output format."));
+          canvas.toBlob(
+            (fallbackBlob) => {
+              if (!fallbackBlob) { reject(new Error("Browser could not encode this image.")); return; }
+              resolve({ blob: fallbackBlob, fallback: true });
+            },
+            "image/jpeg",
+            quality,
+          );
           return;
         }
-
-        resolve(blob);
+        resolve({ blob, fallback: false });
       },
       mimeType,
       quality,

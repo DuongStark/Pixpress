@@ -259,6 +259,11 @@ export default function EditPage() {
       if (dimensionsInvalid) return;
 
       const result = await processImageOnClient(activeImage, createOptions());
+      if (result.formatFallback) {
+        setProcessError(language === "vi"
+          ? `Trình duyệt không hỗ trợ ${format.toUpperCase()}, đã xuất JPG thay thế.`
+          : `Your browser doesn't support ${format.toUpperCase()}, exported as JPG instead.`);
+      }
       const job = createJobFromClientResult(activeImage, createOptions(), result);
       navigate(`/result/${job.jobId}`);
     } catch (err) {
