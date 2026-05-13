@@ -268,6 +268,34 @@
   right: -5px;
 }
 
+.n {
+  cursor: ns-resize;
+  left: 50%;
+  top: -5px;
+  transform: translateX(-50%);
+}
+
+.s {
+  bottom: -5px;
+  cursor: ns-resize;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.e {
+  cursor: ew-resize;
+  right: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.w {
+  cursor: ew-resize;
+  left: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 @keyframes panelIn {
   from {
     opacity: 0;

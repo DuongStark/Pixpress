@@ -16,12 +16,20 @@ import { formatBytes } from "../lib/format";
 import { platformPresets } from "../lib/presets";
 import type { PlatformPreset } from "../lib/presets";
 import { createJobFromClientResult, createMultiPlatformExport, getActiveImage } from "../lib/sessionStore";
-import type { BackgroundMode, FitMode, ImageFormat, OptimizationPriority, ProcessOptions } from "../types";
+import type { BackgroundMode, ImageFormat, OptimizationPriority, ProcessOptions } from "../types";
 import styles from "./EditPage.module.css";
 
 type EditMode = "platform" | "custom";
 
-const ecommercePresetIds = ["shopee-product", "lazada-product", "tiktok-shop"];
+const ecommercePresetIds = [
+  "shopee-product",
+  "lazada-product",
+  "tiktok-shop",
+  "amazon-product",
+  "ebay-product",
+  "etsy-listing",
+  "facebook-marketplace",
+];
 
 export default function EditPage() {
   const { imageId } = useParams();
@@ -40,7 +48,6 @@ export default function EditPage() {
   const [width, setWidth] = useState<number | null>(image?.width || null);
   const [height, setHeight] = useState<number | null>(image?.height || null);
   const [keepAspectRatio, setKeepAspectRatio] = useState(true);
-  const [fitMode, setFitMode] = useState<FitMode>(initialPreset.fitMode);
   const [cropRect, setCropRect] = useState(() =>
     image ? getDefaultCropRect(image.width, image.height, image.width, image.height) : fullCropRect(),
   );
@@ -109,7 +116,6 @@ export default function EditPage() {
     width,
     height,
     keepAspectRatio,
-    fitMode,
     cropRect,
     maxSizeKb,
     priority,
@@ -162,7 +168,6 @@ export default function EditPage() {
     setQualityPreset(preset.priority);
     setWidth(preset.width || activeImage.width);
     setHeight(preset.height || activeImage.height);
-    setFitMode(preset.fitMode);
     setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, preset.width || activeImage.width, preset.height || activeImage.height));
     setMaxSizeKb(preset.maxSizeKb);
     setPriority(preset.priority);
@@ -189,10 +194,8 @@ export default function EditPage() {
     if (keepAspectRatio && nextWidth && nextWidth > 0) {
       const nextHeight = Math.max(1, Math.round(nextWidth / aspectRatio));
       setHeight(nextHeight);
-      if (fitMode === "cover") {
-        setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, nextWidth, nextHeight));
-      }
-    } else if (fitMode === "cover" && nextWidth && height) {
+      setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, nextWidth, nextHeight));
+    } else if (nextWidth && height) {
       setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, nextWidth, height));
     }
   }
@@ -202,30 +205,10 @@ export default function EditPage() {
     if (keepAspectRatio && nextHeight && nextHeight > 0) {
       const nextWidth = Math.max(1, Math.round(nextHeight * aspectRatio));
       setWidth(nextWidth);
-      if (fitMode === "cover") {
-        setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, nextWidth, nextHeight));
-      }
-    } else if (fitMode === "cover" && width && nextHeight) {
+      setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, nextWidth, nextHeight));
+    } else if (width && nextHeight) {
       setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, width, nextHeight));
     }
-  }
-
-  function handleFitModeChange(nextFitMode: FitMode) {
-    setFitMode(nextFitMode);
-
-    if (nextFitMode === "cover") {
-      setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, width || activeImage.width, height || activeImage.height));
-      return;
-    }
-
-    if (nextFitMode === "pad") {
-      if (paddingPercent === 0) setPaddingPercent(12);
-      if (backgroundMode === "transparent") setBackgroundMode("white");
-      return;
-    }
-
-    setCropRect(fullCropRect());
-    setPaddingPercent(0);
   }
 
   async function handleProcess() {
@@ -255,7 +238,7 @@ export default function EditPage() {
     return {
       format,
       quality,
-      resize: { width, height, keepAspectRatio, fitMode },
+      resize: { width, height, keepAspectRatio, fitMode: "cover" },
       crop: { x: cropRect.x, y: cropRect.y, width: cropRect.width, height: cropRect.height },
       removeBackground: false,
       goal: { maxSizeKb, priority },
@@ -271,7 +254,6 @@ export default function EditPage() {
     setWidth(activeImage.width);
     setHeight(activeImage.height);
     setKeepAspectRatio(true);
-    setFitMode("contain");
     setCropRect(fullCropRect());
     setPaddingPercent(0);
     setCenterProduct(true);
@@ -400,9 +382,10 @@ export default function EditPage() {
         <div className={styles.editorGrid}>
           <div className={styles.previewColumn}>
             <ImagePreview
-              cropOptions={fitMode === "cover" ? currentOptions : undefined}
+              cropOptions={currentOptions}
               image={activeImage}
               isRenderingPreview={isRenderingPreview}
+              lockAspectRatio={keepAspectRatio}
               renderedDimensions={livePreview ? { width: livePreview.width, height: livePreview.height } : null}
               renderedPreviewUrl={livePreview?.url}
               onCropChange={setCropRect}
@@ -446,7 +429,6 @@ export default function EditPage() {
                 <div className={styles.stepBody}>
                   <ResizeControls
                     disabled={isProcessing}
-                    fitMode={fitMode}
                     height={height}
                     keepAspectRatio={keepAspectRatio}
                     paddingPercent={paddingPercent}
@@ -456,7 +438,6 @@ export default function EditPage() {
                       setCropRect(getDefaultCropRect(activeImage.width, activeImage.height, width || activeImage.width, height || activeImage.height));
                     }}
                     onCenterProductChange={setCenterProduct}
-                    onFitModeChange={handleFitModeChange}
                     onHeightChange={handleHeightChange}
                     onKeepAspectRatioChange={setKeepAspectRatio}
                     onPaddingChange={setPaddingPercent}

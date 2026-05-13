@@ -93,6 +93,99 @@ export const presets = [
       priority: "balanced"
     },
     {
+      presetId: "amazon-product",
+      name: "Amazon",
+      group: "ecommerce",
+      description: "Square product image, white background, 2000x2000px",
+      platform: "amazon",
+      output: {
+        format: "jpg",
+        width: 2000,
+        height: 2000,
+        fit: "contain",
+        background: {
+          mode: "solid",
+          color: "#FFFFFF"
+        },
+        paddingPercent: 8,
+        quality: 88,
+        targetMaxBytes: 2048000
+      },
+      constraints: {
+        minWidth: 1000,
+        maxWidth: 3000,
+        minHeight: 1000,
+        maxHeight: 3000,
+        maxTargetBytes: 10485760,
+        allowedFormats: ["jpg", "png"],
+        productFillPercent: 75
+      },
+      removeBackgroundDefault: false,
+      priority: "best"
+    },
+    {
+      presetId: "ebay-product",
+      name: "eBay",
+      group: "ecommerce",
+      description: "Square listing image, clean background, 1600x1600px",
+      platform: "ebay",
+      output: {
+        format: "jpg",
+        width: 1600,
+        height: 1600,
+        fit: "contain",
+        background: {
+          mode: "solid",
+          color: "#FFFFFF"
+        },
+        paddingPercent: 8,
+        quality: 86,
+        targetMaxBytes: 1536000
+      },
+      constraints: {
+        minWidth: 500,
+        maxWidth: 3000,
+        minHeight: 500,
+        maxHeight: 3000,
+        maxTargetBytes: 10485760,
+        allowedFormats: ["jpg", "png"],
+        productFillPercent: 70
+      },
+      removeBackgroundDefault: false,
+      priority: "balanced"
+    },
+    {
+      presetId: "etsy-listing",
+      name: "Etsy",
+      group: "ecommerce",
+      description: "4:3 listing image, 2000x1500px",
+      platform: "etsy",
+      output: {
+        format: "jpg",
+        width: 2000,
+        height: 1500,
+        fit: "cover",
+        background: {
+          mode: "solid",
+          color: "#FFFFFF"
+        },
+        paddingPercent: 4,
+        quality: 86,
+        targetMaxBytes: 1536000
+      },
+      constraints: {
+        minWidth: 1000,
+        maxWidth: 3000,
+        minHeight: 750,
+        maxHeight: 3000,
+        maxTargetBytes: 10485760,
+        allowedFormats: ["jpg", "png"],
+        productFillPercent: 75
+      },
+      removeBackgroundDefault: false,
+      priority: "balanced"
+    },
+    {
       presetId: "website-webp",
       name: "Website WebP",
       group: "website",
@@ -228,6 +321,68 @@ export const presets = [
       priority: "balanced"
     },
     {
+      presetId: "shopify-product",
+      name: "Shopify product",
+      group: "website",
+      description: "Square product image for online stores, 2048x2048px",
+      platform: "shopify",
+      output: {
+        format: "webp",
+        width: 2048,
+        height: 2048,
+        fit: "contain",
+        background: {
+          mode: "solid",
+          color: "#FFFFFF"
+        },
+        paddingPercent: 6,
+        quality: 84,
+        targetMaxBytes: 1024000
+      },
+      constraints: {
+        minWidth: 800,
+        maxWidth: 3000,
+        minHeight: 800,
+        maxHeight: 3000,
+        maxTargetBytes: 5242880,
+        allowedFormats: ["jpg", "png", "webp"],
+        productFillPercent: 75
+      },
+      removeBackgroundDefault: false,
+      priority: "balanced"
+    },
+    {
+      presetId: "woocommerce-product",
+      name: "WooCommerce product",
+      group: "website",
+      description: "Square product image for WooCommerce stores, 1200x1200px",
+      platform: "woocommerce",
+      output: {
+        format: "webp",
+        width: 1200,
+        height: 1200,
+        fit: "contain",
+        background: {
+          mode: "solid",
+          color: "#FFFFFF"
+        },
+        paddingPercent: 6,
+        quality: 82,
+        targetMaxBytes: 716800
+      },
+      constraints: {
+        minWidth: 600,
+        maxWidth: 2400,
+        minHeight: 600,
+        maxHeight: 2400,
+        maxTargetBytes: 5242880,
+        allowedFormats: ["jpg", "png", "webp"],
+        productFillPercent: 75
+      },
+      removeBackgroundDefault: false,
+      priority: "balanced"
+    },
+    {
       presetId: "youtube-thumbnail",
       name: "YouTube thumbnail",
       group: "social",
@@ -254,6 +409,36 @@ export const presets = [
       },
       removeBackgroundDefault: false,
       priority: "best"
+    },
+    {
+      presetId: "pinterest-pin",
+      name: "Pinterest pin",
+      group: "social",
+      description: "2:3 Pinterest pin image, 1000x1500px",
+      platform: "pinterest",
+      output: {
+        format: "jpg",
+        width: 1000,
+        height: 1500,
+        fit: "cover",
+        background: {
+          mode: "solid",
+          color: "#FFFFFF"
+        },
+        paddingPercent: 0,
+        quality: 84,
+        targetMaxBytes: 716800
+      },
+      constraints: {
+        minWidth: 600,
+        maxWidth: 2000,
+        minHeight: 900,
+        maxHeight: 3000,
+        maxTargetBytes: 5242880,
+        allowedFormats: ["jpg", "png", "webp"]
+      },
+      removeBackgroundDefault: false,
+      priority: "balanced"
     },
     {
       presetId: "custom",

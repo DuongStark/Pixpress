@@ -133,13 +133,18 @@ function getDrawRect(
   targetHeight: number,
   options: ProcessOptions,
 ): DrawRect {
-  if (options.resize.fitMode === "cover") {
-    const crop = normalizeCoverCrop(options.crop, sourceWidth, sourceHeight, targetWidth, targetHeight);
-    const sx = (crop.x / 100) * sourceWidth;
-    const sy = (crop.y / 100) * sourceHeight;
-    const sw = (crop.width / 100) * sourceWidth;
-    const sh = (crop.height / 100) * sourceHeight;
+  const crop = options.crop;
+  const sx = (crop.x / 100) * sourceWidth;
+  const sy = (crop.y / 100) * sourceHeight;
+  const sw = (crop.width / 100) * sourceWidth;
+  const sh = (crop.height / 100) * sourceHeight;
 
+  const cropRatio = sw / sh;
+  const targetRatio = targetWidth / targetHeight;
+  const ratioMatch = Math.abs(cropRatio - targetRatio) < 0.01;
+
+  // If crop matches target ratio, fill the entire frame (no padding needed)
+  if (ratioMatch) {
     return {
       sx,
       sy,
@@ -152,52 +157,24 @@ function getDrawRect(
     };
   }
 
-  const padding = options.resize.fitMode === "pad" || options.background.paddingPercent > 0
-    ? Math.min(Math.max(options.background.paddingPercent, 0), 40) / 100
-    : 0;
+  // Otherwise, fit crop into target with padding
+  const padding = Math.min(Math.max(options.background.paddingPercent, 0), 40) / 100;
   const availableWidth = targetWidth * (1 - padding * 2);
   const availableHeight = targetHeight * (1 - padding * 2);
-  const scale = Math.min(availableWidth / sourceWidth, availableHeight / sourceHeight);
-  const dw = Math.max(1, Math.round(sourceWidth * scale));
-  const dh = Math.max(1, Math.round(sourceHeight * scale));
+  const scale = Math.min(availableWidth / sw, availableHeight / sh);
+  const dw = Math.max(1, Math.round(sw * scale));
+  const dh = Math.max(1, Math.round(sh * scale));
 
   return {
-    sx: 0,
-    sy: 0,
-    sw: sourceWidth,
-    sh: sourceHeight,
+    sx,
+    sy,
+    sw,
+    sh,
     dx: Math.round((targetWidth - dw) / 2),
     dy: Math.round((targetHeight - dh) / 2),
     dw,
     dh,
   };
-}
-
-function normalizeCoverCrop(
-  crop: ProcessOptions["crop"],
-  sourceWidth: number,
-  sourceHeight: number,
-  targetWidth: number,
-  targetHeight: number,
-): ProcessOptions["crop"] {
-  const x = clamp(crop.x, 0, 99);
-  const y = clamp(crop.y, 0, 99);
-  let width = clamp(crop.width, 1, 100 - x);
-  let height = clamp(crop.height, 1, 100 - y);
-  const cropRatio = (width * sourceWidth) / (height * sourceHeight);
-  const targetRatio = targetWidth / targetHeight;
-
-  if (Math.abs(cropRatio - targetRatio) < 0.001) {
-    return { x, y, width, height };
-  }
-
-  if (cropRatio > targetRatio) {
-    const nextWidth = (height * sourceHeight * targetRatio) / sourceWidth;
-    return { x: x + (width - nextWidth) / 2, y, width: nextWidth, height };
-  }
-
-  const nextHeight = (width * sourceWidth) / targetRatio / sourceHeight;
-  return { x, y: y + (height - nextHeight) / 2, width, height: nextHeight };
 }
 
 function clamp(value: number, min: number, max: number): number {

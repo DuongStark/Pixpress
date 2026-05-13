@@ -10,7 +10,15 @@ type MultiPlatformSelectorProps = {
   onChange: (ids: string[]) => void;
 };
 
-const ecommerceIds = ["shopee-product", "lazada-product", "tiktok-shop"];
+const ecommerceIds = [
+  "shopee-product",
+  "lazada-product",
+  "tiktok-shop",
+  "amazon-product",
+  "ebay-product",
+  "etsy-listing",
+  "facebook-marketplace",
+];
 
 export default function MultiPlatformSelector({
   language,
