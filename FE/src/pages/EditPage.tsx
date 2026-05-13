@@ -62,6 +62,7 @@ export default function EditPage() {
   const [processError, setProcessError] = useState<string | null>(null);
   const [livePreview, setLivePreview] = useState<{ url: string; width: number; height: number } | null>(null);
   const [isRenderingPreview, setIsRenderingPreview] = useState(false);
+  const [hoveredPlatformId, setHoveredPlatformId] = useState<string | null>(null);
   const livePreviewUrlRef = useRef<string | null>(null);
   const dimensionsInvalid = isInvalidDimension(width) || isInvalidDimension(height);
 
@@ -151,6 +152,14 @@ export default function EditPage() {
   );
 
   const ecommercePresets = platformPresets.filter((p) => ecommercePresetIds.includes(p.id));
+
+  const platformCropRect = useMemo(() => {
+    if (editMode !== "platform" || !activeImage) return null;
+    const targetId = hoveredPlatformId ?? selectedPlatformIds[0];
+    const preset = ecommercePresets.find((p) => p.id === targetId);
+    if (!preset) return null;
+    return getDefaultCropRect(activeImage.width, activeImage.height, preset.width, preset.height);
+  }, [editMode, activeImage, hoveredPlatformId, selectedPlatformIds, ecommercePresets]);
 
   function togglePlatform(id: string) {
     if (selectedPlatformIds.includes(id)) {
@@ -312,7 +321,7 @@ export default function EditPage() {
       {editMode === "platform" ? (
         <div className={styles.editorGrid}>
           <div className={styles.previewColumn}>
-            <ImagePreview image={activeImage} />
+            <ImagePreview image={activeImage} readOnlyCrop={platformCropRect} />
             <div className={styles.previewNote}>
               <Sparkles size={14} aria-hidden="true" />
               <span>{t.edit.platformNote}</span>
@@ -339,6 +348,8 @@ export default function EditPage() {
                     disabled={isProcessing}
                     type="button"
                     onClick={() => togglePlatform(preset.id)}
+                    onMouseEnter={() => setHoveredPlatformId(preset.id)}
+                    onMouseLeave={() => setHoveredPlatformId(null)}
                   >
                     <span className={styles.platformCardCheck} aria-hidden="true" />
                     <strong className={styles.platformCardName}>{preset.name[language]}</strong>

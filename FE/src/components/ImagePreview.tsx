@@ -10,6 +10,7 @@ type CropAction = "move" | "nw" | "ne" | "sw" | "se" | "n" | "s" | "e" | "w";
 type ImagePreviewProps = {
   image: UploadedImage;
   cropOptions?: Pick<ProcessOptions, "resize" | "crop">;
+  readOnlyCrop?: CropRect | null;
   compact?: boolean;
   renderedPreviewUrl?: string | null;
   renderedDimensions?: { width: number; height: number } | null;
@@ -22,6 +23,7 @@ export default function ImagePreview({
   image,
   compact = false,
   cropOptions,
+  readOnlyCrop,
   renderedPreviewUrl,
   renderedDimensions,
   isRenderingPreview = false,
@@ -109,7 +111,7 @@ export default function ImagePreview({
         </div>
         <span>{showPreviewImage && renderedDimensions ? formatDimensions(renderedDimensions.width, renderedDimensions.height) : formatDimensions(image.width, image.height)}</span>
       </div>
-      <div className={showCropEditor ? styles.cropFrame : styles.imageFrame}>
+      <div className={showCropEditor || readOnlyCrop ? styles.cropFrame : styles.imageFrame}>
         {showPreviewImage ? (
           <>
             <img src={renderedPreviewUrl || image.previewUrl} alt={image.originalName} />
@@ -147,6 +149,20 @@ export default function ImagePreview({
                 <span className={`${styles.cropHandle} ${styles.w}`} onPointerDown={handlePointerDown("w")} />
               </div>
             </div>
+          </div>
+        ) : readOnlyCrop ? (
+          <div className={styles.cropBox} style={{ aspectRatio: `${image.width} / ${image.height}` }}>
+            <img alt={image.originalName} draggable={false} src={image.previewUrl} />
+            <div className={styles.cropShade} />
+            <div
+              className={styles.readOnlyCropSelection}
+              style={{
+                height: `${readOnlyCrop.height}%`,
+                left: `${readOnlyCrop.x}%`,
+                top: `${readOnlyCrop.y}%`,
+                width: `${readOnlyCrop.width}%`,
+              }}
+            />
           </div>
         ) : (
           <img src={image.previewUrl} alt={image.originalName} />
