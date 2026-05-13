@@ -108,6 +108,12 @@
   margin: 0 0 4px;
 }
 
+.dropzoneColumn {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .dropzoneHints {
   display: flex;
   align-items: center;

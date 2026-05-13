@@ -85,22 +85,24 @@ export default function UploadPage() {
       </div>
 
       <div className={styles.uploadBoard}>
-        <ImageDropzone
-          disabled={isUploading}
-          error={error}
-          image={image}
-          onFileRejected={setError}
-          onFileSelected={handleFileSelected}
-          onRemove={handleRemove}
-        />
-        <div className={styles.dropzoneHints}>
-          <span className={styles.hintText}>
-            {t.dropzone.supports}
-          </span>
-          <div className={styles.platformBadges}>
-            <span>Shopee</span>
-            <span>TikTok</span>
-            <span>Instagram</span>
+        <div className={styles.dropzoneColumn}>
+          <ImageDropzone
+            disabled={isUploading}
+            error={error}
+            image={image}
+            onFileRejected={setError}
+            onFileSelected={handleFileSelected}
+            onRemove={handleRemove}
+          />
+          <div className={styles.dropzoneHints}>
+            <span className={styles.hintText}>
+              {t.dropzone.supports}
+            </span>
+            <div className={styles.platformBadges}>
+              <span>Shopee</span>
+              <span>TikTok</span>
+              <span>Instagram</span>
+            </div>
           </div>
         </div>
 
