@@ -56,7 +56,6 @@ export default function EditPage() {
   const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>(initialPreset.backgroundMode);
   const [backgroundColor, setBackgroundColor] = useState("#ffffff");
   const [paddingPercent, setPaddingPercent] = useState(initialPreset.paddingPercent);
-  const [softShadow, setSoftShadow] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processError, setProcessError] = useState<string | null>(null);
   const [livePreview, setLivePreview] = useState<{ url: string; width: number; height: number } | null>(null);
@@ -123,7 +122,6 @@ export default function EditPage() {
     backgroundMode,
     backgroundColor,
     paddingPercent,
-    softShadow,
     selectedPreset,
     language,
   ]);
@@ -207,10 +205,7 @@ export default function EditPage() {
     setPriority(preset.priority);
     setBackgroundMode(preset.backgroundMode);
     setPaddingPercent(preset.paddingPercent);
-    setSoftShadow(false);
-  }
-
-  function handleQualityChange(nextQuality: number) {
+  }  function handleQualityChange(nextQuality: number) {
     setQuality(Math.max(10, nextQuality));
     setQualityPreset(null);
     setPriority("smallest");
@@ -281,7 +276,7 @@ export default function EditPage() {
       crop: { x: cropRect.x, y: cropRect.y, width: cropRect.width, height: cropRect.height },
       removeBackground: false,
       goal: { maxSizeKb, priority },
-      background: { mode: backgroundMode, color: backgroundColor, paddingPercent, centerProduct: true, softShadow },
+      background: { mode: backgroundMode, color: backgroundColor, paddingPercent, centerProduct: true, softShadow: false },
       preset:
         editMode === "custom"
           ? { id: "custom", name: language === "vi" ? "Tự chỉnh" : "Custom" }
@@ -308,7 +303,6 @@ export default function EditPage() {
   function resetBackground() {
     setBackgroundMode(initialPreset.backgroundMode);
     setBackgroundColor("#ffffff");
-    setSoftShadow(false);
   }
 
   const canProcess = editMode === "platform" ? selectedPlatformIds.length > 0 : !dimensionsInvalid;
@@ -560,10 +554,8 @@ export default function EditPage() {
                     disabled={isProcessing}
                     language={language}
                     mode={backgroundMode}
-                    softShadow={softShadow}
                     onColorChange={setBackgroundColor}
                     onModeChange={setBackgroundMode}
-                    onSoftShadowChange={setSoftShadow}
                   />
                   <div className={styles.featureBanner}>
                     <span>{t.edit.removeBackgroundLocked}</span>

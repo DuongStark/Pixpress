@@ -1,4 +1,5 @@
 import { ComplianceReport, MultiPlatformExport, ProcessOptions, ProcessedJob, UploadedImage } from "../types";
+import { zipSync } from "fflate";
 import { processImageOnClient } from "./clientImageProcessor";
 import type { ClientProcessResult } from "./clientImageProcessor";
 import { estimateResultSize } from "./estimate";
@@ -213,13 +214,24 @@ export async function createMultiPlatformExport(
       };
     }));
 
+  // Build real ZIP from all variant blobs
+  const zipFiles: Record<string, Uint8Array> = {};
+  for (const variant of variants) {
+    const resp = await fetch(variant.result.downloadUrl);
+    const buf = await resp.arrayBuffer();
+    zipFiles[variant.result.fileName] = new Uint8Array(buf);
+  }
+  const zipped = zipSync(zipFiles);
+  const zipBlob = new Blob([zipped], { type: "application/zip" });
+  const zipDownloadUrl = URL.createObjectURL(zipBlob);
+
   const exportJob: MultiPlatformExport = {
     exportId,
     imageId: image.imageId,
     status: "completed",
     original: stripFile(image),
     variants,
-    zipDownloadUrl: variants[0]?.result.downloadUrl ?? image.previewUrl,
+    zipDownloadUrl,
   };
 
   const exports = getExports();
@@ -260,12 +272,6 @@ function createCompliance(
         message: `${width} x ${height}px`,
       },
       {
-        code: "RATIO",
-        level: width === height ? "pass" : "warning",
-        label: "Tỉ lệ",
-        message: width === height ? "1:1" : `${width}:${height}`,
-      },
-      {
         code: "FILE_SIZE",
         level: goalPassed ? "pass" : "fail",
         label: "Dung lượng",
@@ -276,12 +282,6 @@ function createCompliance(
         level: "pass",
         label: "Định dạng",
         message: format,
-      },
-      {
-        code: "MANUAL_REVIEW",
-        level: "warning",
-        label: "Nội dung ảnh",
-        message: "Hãy kiểm tra sản phẩm, chữ và logo trước khi đăng.",
       },
     ],
   };

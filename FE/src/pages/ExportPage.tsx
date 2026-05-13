@@ -412,12 +412,6 @@ function createCompliance(
         message: `${width} x ${height}px`,
       },
       {
-        code: "RATIO",
-        level: width === height ? "pass" : "warning",
-        label: "Tỉ lệ",
-        message: width === height ? "1:1" : `${width}:${height}`,
-      },
-      {
         code: "FILE_SIZE",
         level: goalPassed ? "pass" : "fail",
         label: "Dung lượng",
@@ -428,12 +422,6 @@ function createCompliance(
         level: "pass",
         label: "Định dạng",
         message: format,
-      },
-      {
-        code: "MANUAL_REVIEW",
-        level: "warning",
-        label: "Nội dung ảnh",
-        message: "Hãy kiểm tra sản phẩm, chữ và logo trước khi đăng.",
       },
     ],
   };

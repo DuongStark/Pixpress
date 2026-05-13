@@ -15,22 +15,18 @@ type BackgroundControlsProps = {
   language: Language;
   mode: BackgroundMode;
   color: string;
-  softShadow: boolean;
   disabled?: boolean;
   onModeChange: (value: BackgroundMode) => void;
   onColorChange: (value: string) => void;
-  onSoftShadowChange: (value: boolean) => void;
 };
 
 export default function BackgroundControls({
   language,
   mode,
   color,
-  softShadow,
   disabled = false,
   onModeChange,
   onColorChange,
-  onSoftShadowChange,
 }: BackgroundControlsProps) {
   return (
     <fieldset className={styles.fieldset}>
@@ -54,18 +50,7 @@ export default function BackgroundControls({
           <input disabled={disabled} type="color" value={color} onChange={(event) => onColorChange(event.target.value)} />
         </label>
       ) : null}
-      <label className={styles.toggle}>
-        <span>
-          <strong>{language === "vi" ? "Bóng nhẹ" : "Soft shadow"}</strong>
-          <small>{language === "vi" ? "Tạo chiều sâu cho sản phẩm" : "Adds product depth"}</small>
-        </span>
-        <input
-          checked={softShadow}
-          disabled={disabled}
-          type="checkbox"
-          onChange={(event) => onSoftShadowChange(event.target.checked)}
-        />
-      </label>
+
     </fieldset>
   );
 }
